@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MURH Hipódromo · Acceso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue-deep:#14366B;
+    --blue-main:#215AB3;
+    --blue-soft:#4D7BC2;
+    --blue-lightest:#C8D6EC;
+    --cream:#F4F7FB;
+    --ink:#14366B;
+    --grey:#95A5BC;
+    --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Manrope',sans-serif;
+    background:var(--blue-main);
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.10) 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(20,54,107,0.35) 0%, transparent 50%),
+      radial-gradient(circle at 80% 15%, rgba(77,123,194,0.22) 0%, transparent 40%);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .blob{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(0px);
+    opacity:0.9;
+  }
+  .blob1{
+    width:420px;height:380px;
+    background:var(--blue-deep);
+    top:-140px;left:-140px;
+    border-radius:58% 42% 63% 37% / 41% 55% 45% 59%;
+  }
+  .blob2{
+    width:300px;height:260px;
+    background:rgba(255,255,255,0.08);
+    bottom:-90px;right:-60px;
+    border-radius:63% 37% 41% 59% / 55% 45% 59% 41%;
+  }
+  .card{
+    position:relative;
+    z-index:2;
+    width:min(420px, 90vw);
+    background:var(--cream);
+    border-radius:38px 44px 40px 46px / 46px 40px 44px 38px;
+    padding:44px 40px 38px;
+    box-shadow:0 30px 60px -20px rgba(10,20,50,0.55);
+  }
+  .logo-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom:6px;
+  }
+  .logo-badge{
+    width:78px;height:78px;
+    background:var(--blue-main);
+    border-radius:44% 56% 52% 48% / 50% 46% 54% 50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:inset 0 -6px 12px rgba(0,0,0,0.15), 0 10px 20px -8px rgba(33,90,179,0.6);
+  }
+  .logo-badge .murh-mark{width:44px;height:44px;display:block;}
+  h1{
+    font-family:'Baloo 2',sans-serif;
+    font-weight:800;
+    font-size:28px;
+    text-align:center;
+    color:var(--blue-deep);
+    margin:14px 0 2px;
+    letter-spacing:-0.3px;
+  }
+  .sub{
+    text-align:center;
+    color:var(--grey);
+    font-size:13.5px;
+    font-weight:600;
+    margin:0 0 28px;
+    text-transform:uppercase;
+    letter-spacing:1.2px;
+  }
+  label{
+    display:block;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--blue-deep);
+    margin:0 0 6px 4px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+  }
+  .field{margin-bottom:16px;}
+  select, input{
+    width:100%;
+    padding:13px 16px;
+    border-radius:16px;
+    border:2px solid var(--blue-lightest);
+    background:var(--white);
+    font-family:'Manrope',sans-serif;
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  select:focus, input:focus{
+    border-color:var(--blue-main);
+    box-shadow:0 0 0 4px rgba(33,90,179,0.15);
+  }
+  button{
+    width:100%;
+    margin-top:8px;
+    padding:14px 16px;
+    border:none;
+    border-radius:18px;
+    background:var(--blue-deep);
+    color:var(--white);
+    font-family:'Baloo 2',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    letter-spacing:0.3px;
+    transition:transform .12s ease, background .15s ease;
+  }
+  button:hover{background:var(--blue-main); transform:translateY(-1px);}
+  button:active{transform:translateY(0);}
+  .error{
+    color:var(--blue-deep);
+    font-size:13px;
+    font-weight:700;
+    text-align:center;
+    margin-top:14px;
+    min-height:16px;
+  }
+  .foot{
+    text-align:center;
+    margin-top:22px;
+    font-size:11.5px;
+    color:rgba(20,54,107,0.45);
+    font-weight:600;
+  }
+</style>
+</head>
+<body>
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+
+  <div class="card">
+    <div class="logo-wrap">
+      <div class="logo-badge">
+        <svg viewBox="0 0 447 447" xmlns="http://www.w3.org/2000/svg" class="murh-mark"><g transform="translate(0.000000,447.000000) scale(0.100000,-0.100000)" fill="#ffffff" stroke="none"><path d="M0 2235 l0 -2235 2235 0 2235 0 0 2235 0 2235 -2235 0 -2235 0 0
+-2235z m2077 1149 c120 -57 196 -221 164 -351 -7 -26 -34 -95 -61 -153 -64
+-139 -75 -216 -55 -370 16 -123 11 -169 -24 -218 -47 -67 -177 -58 -239 17
+-33 39 -62 118 -62 166 0 76 14 114 111 316 75 154 91 195 91 234 0 60 -22 85
+-73 85 -32 0 -40 -5 -57 -32 -11 -18 -22 -46 -26 -61 -4 -16 -18 -40 -32 -54
+-27 -27 -46 -27 -118 0 -69 26 -112 -4 -130 -89 -8 -35 8 -90 60 -206 57 -126
+56 -254 -1 -384 -90 -204 -303 -226 -356 -37 -14 50 -9 72 65 278 54 151 49
+239 -23 390 -44 92 -61 145 -61 196 0 97 71 216 147 245 102 39 221 -31 254
+-149 15 -55 37 -45 77 33 47 92 57 105 97 136 66 50 156 53 252 8z m480 -25
+c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
+-16 -60 35 -121 76 -90 9 6 25 52 36 106 27 126 57 186 128 249 121 109 135
+125 163 185 16 33 33 86 39 116 13 70 28 98 62 116 61 31 168 2 212 -59 30
+-41 33 -145 7 -219 -43 -123 -118 -203 -300 -321 -85 -55 -105 -94 -130 -255
+-22 -137 -47 -201 -95 -236 -75 -57 -186 -61 -259 -10 -53 38 -111 136 -134
+228 -23 94 -8 193 46 319 53 124 61 156 61 267 0 189 51 284 170 321 37 11 73
+10 107 -2z m505 -649 c27 -33 23 -48 -27 -94 -42 -38 -47 -47 -55 -109 -13
+-92 -32 -132 -70 -152 -62 -32 -121 4 -139 84 -17 77 18 200 72 249 59 55 182
+67 219 22z m118 -115 c44 -40 44 -163 1 -258 -31 -66 -84 -100 -166 -105 -58
+-4 -66 -2 -89 21 -31 31 -33 51 -7 75 10 9 31 28 45 41 14 13 28 33 30 45 27
+152 39 179 86 202 26 14 73 3 100 -21z m-1303 -359 c32 -20 63 -78 63 -115 0
+-35 -30 -90 -62 -114 -18 -13 -60 -34 -92 -47 -59 -24 -135 -75 -168 -114 -10
+-12 -23 -37 -29 -57 -10 -31 -7 -46 21 -125 86 -241 104 -351 75 -449 -48
+-167 -247 -206 -329 -65 -29 49 -27 180 3 324 37 172 26 234 -64 360 -42 57
+-45 99 -14 164 46 94 127 106 225 32 30 -23 61 -39 68 -37 8 3 16 25 20 49 15
+97 88 199 154 214 15 3 32 7 37 9 19 6 60 -7 92 -29z m965 14 c45 -13 85 -58
+94 -107 10 -54 -32 -128 -120 -210 -39 -36 -79 -77 -88 -92 -35 -52 -13 -139
+31 -127 60 17 138 27 169 21 79 -15 148 -74 178 -151 17 -46 17 -48 -7 -118
+-30 -87 -30 -162 0 -230 27 -62 21 -98 -23 -131 -106 -81 -260 -71 -316 20
+-52 85 -48 143 16 209 30 32 44 55 44 74 0 70 -83 136 -141 112 -31 -13 -75
+-71 -95 -127 -7 -21 -13 -79 -14 -130 0 -103 -11 -138 -51 -159 -35 -18 -120
+-18 -162 0 -44 18 -95 78 -103 122 -10 56 3 157 28 216 12 29 53 91 91 138 93
+116 132 198 162 345 27 129 40 163 93 238 33 46 68 71 122 88 35 10 50 10 92
+-1z m-528 -140 c151 -93 140 -244 -31 -432 -107 -118 -136 -191 -113 -293 34
+-157 20 -201 -82 -255 -80 -43 -153 -13 -201 80 -23 44 -27 64 -23 97 8 60 40
+150 102 288 61 135 65 169 34 260 -24 70 -25 113 -5 163 21 49 51 80 100 104
+54 25 169 19 219 -12z"/></g></svg>
+      </div>
+    </div>
+    <h1>MURH Hipódromo</h1>
+    <p class="sub">Panel interno · Acceso</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="user">Usuario</label>
+        <select id="user" required>
+          <option value="" disabled selected>Selecciona tu usuario</option>
+          <option value="marco">Marco</option>
+          <option value="martin">Martín</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pass">Contraseña</label>
+        <input type="password" id="pass" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit">Entrar al panel</button>
+      <div class="error" id="err"></div>
+    </form>
+    <p class="foot">MURH Hipódromo © 2026 — uso interno</p>
+  </div>
+
+<script>
+  const CREDS = {
+    marco:  "Murh_Marco26",
+    martin: "Murh_Martin26"
+  };
+
+  const form = document.getElementById('loginForm');
+  const errEl = document.getElementById('err');
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const user = document.getElementById('user').value;
+    const pass = document.getElementById('pass').value;
+
+    if(CREDS[user] && CREDS[user] === pass){
+      const displayName = user === 'marco' ? 'Marco' : 'Martín';
+      window.location.href = 'inversion.html?user=' + encodeURIComponent(displayName);
+    } else {
+      errEl.textContent = 'Usuario o contraseña incorrectos.';
+    }
+  });
+</script>
+</body>
+</html>

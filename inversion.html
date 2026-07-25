@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MURH Hipódromo · Inversión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --blue-deep:#14366B;
+    --blue-main:#215AB3;
+    --blue-soft:#4D7BC2;
+    --blue-pale:#E9EFF7;
+    --blue-lightest:#C8D6EC;
+    --cream:#F4F7FB;
+    --ink:#14366B;
+    --grey:#95A5BC;
+    --white:#FFFFFF;
+    --sidebar-w:250px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Manrope',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:var(--sidebar-w);
+    background:var(--blue-deep);
+    color:var(--white);
+    display:flex;
+    flex-direction:column;
+    padding:26px 18px;
+    position:fixed;
+    top:0;left:0;bottom:0;
+    overflow-y:auto;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:30px;
+    padding:0 6px;
+  }
+  .brand .badge{
+    width:38px;height:38px;
+    background:var(--blue-main);
+    border-radius:44% 56% 52% 48% / 50% 46% 54% 50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand .badge .murh-mark{width:22px;height:22px;display:block;}
+  .brand-text{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;line-height:1.1;}
+  .brand-text span{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:10.5px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+  .menu-label{
+    font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);
+    text-transform:uppercase;letter-spacing:1.2px;
+    margin:10px 8px 10px;
+  }
+  .menu{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px;}
+  .menu li a, .menu li .disabled{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 12px;
+    border-radius:14px;
+    color:rgba(255,255,255,0.8);
+    text-decoration:none;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .menu li a.active{
+    background:var(--blue-main);
+    color:var(--white);
+    box-shadow:0 6px 16px -6px rgba(33,90,179,0.7);
+  }
+  .menu li a:hover:not(.active){background:rgba(255,255,255,0.06); color:var(--white);}
+  .menu li .disabled{color:rgba(255,255,255,0.35); cursor:default;}
+  .menu li .tag{
+    margin-left:auto;
+    font-size:9.5px;font-weight:800;
+    background:rgba(255,255,255,0.08);
+    padding:3px 7px;border-radius:8px;
+    text-transform:uppercase;letter-spacing:0.4px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:0.55;}
+  .menu li a.active .dot{background:var(--white); opacity:1;}
+
+  .sidebar-foot{
+    margin-top:auto;
+    padding:14px 12px;
+    background:rgba(255,255,255,0.06);
+    border-radius:16px;
+    font-size:12.5px;
+  }
+  .sidebar-foot .who{font-weight:800;color:var(--white);}
+  .sidebar-foot a{color:rgba(255,255,255,0.75); text-decoration:none; font-weight:700; font-size:11.5px;}
+
+  /* ---------- MAIN ---------- */
+  main{
+    margin-left:var(--sidebar-w);
+    flex:1;
+    padding:32px 40px 60px;
+    max-width:1300px;
+  }
+  .topbar{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:26px;flex-wrap:wrap;gap:16px;
+  }
+  .topbar h1{
+    font-family:'Baloo 2',sans-serif;
+    font-size:30px;font-weight:800;color:var(--blue-deep);
+    margin:0 0 4px;
+  }
+  .topbar p{margin:0;color:var(--grey);font-weight:600;font-size:14px;}
+
+  .month-select{
+    display:flex;align-items:center;gap:10px;
+  }
+  .month-select label{font-size:12px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:0.6px;}
+  select#monthFilter{
+    padding:11px 16px;
+    border-radius:14px;
+    border:2px solid var(--blue-lightest);
+    background:var(--white);
+    font-family:'Manrope',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    color:var(--blue-deep);
+    outline:none;
+    cursor:pointer;
+  }
+  select#monthFilter:focus{border-color:var(--blue-main);}
+
+  /* barra de filtros (al inicio de la página) */
+  .filters-bar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:end;
+    gap:14px;
+    background:var(--white);
+    border-radius:22px;
+    padding:16px 20px;
+    margin-bottom:24px;
+    box-shadow:0 10px 26px -16px rgba(15,30,61,0.16);
+  }
+  .filter-field{display:flex;flex-direction:column;gap:6px;min-width:150px;flex:1;}
+  .filter-field label{
+    font-size:10.5px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.6px;
+  }
+  .filter-field select, .filter-field input{
+    padding:10px 13px;
+    border-radius:12px;
+    border:1.5px solid var(--blue-pale);
+    background:var(--cream);
+    font-family:'Manrope',sans-serif;
+    font-size:13px;font-weight:700;
+    color:var(--ink);
+    outline:none;
+  }
+  .filter-field select:focus, .filter-field input:focus{border-color:var(--blue-main);}
+  .filters-bar #clearFilters{flex:0 0 auto;height:41px;align-self:end;}
+
+  /* KPI cards */
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:18px;
+    margin-bottom:28px;
+  }
+  .kpi{
+    background:var(--white);
+    border-radius:26px 30px 26px 30px / 30px 26px 30px 26px;
+    padding:20px 22px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 26px -14px rgba(15,30,61,0.18);
+  }
+  .kpi::after{
+    content:"";
+    position:absolute;
+    width:90px;height:90px;
+    border-radius:50%;
+    top:-30px;right:-30px;
+    opacity:0.10;
+  }
+  .kpi.plan::after{background:var(--blue-main);}
+  .kpi.pagado::after{background:var(--blue-main);}
+  .kpi.pendiente::after{background:var(--blue-deep);}
+  .kpi.avance::after{background:var(--blue-soft);}
+  .kpi .lbl{font-size:11.5px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;}
+  .kpi .val{font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:var(--blue-deep);}
+  .kpi .sub{font-size:12px;font-weight:600;color:var(--grey);margin-top:4px;}
+  .kpi.pendiente .val{color:var(--blue-deep);}
+  .kpi.pagado .val{color:var(--blue-main);}
+
+  /* charts row */
+  .charts-row{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:18px;
+    margin-bottom:28px;
+  }
+  .panel{
+    background:var(--white);
+    border-radius:26px;
+    padding:22px 24px;
+    box-shadow:0 10px 26px -14px rgba(15,30,61,0.14);
+  }
+  .panel h3{
+    font-family:'Baloo 2',sans-serif;
+    font-size:17px;font-weight:700;color:var(--blue-deep);
+    margin:0 0 14px;
+  }
+  .chart-box{position:relative; height:260px;}
+
+  /* table */
+  .table-panel{background:var(--white);border-radius:26px;padding:22px 24px;box-shadow:0 10px 26px -14px rgba(15,30,61,0.14);}
+  .table-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:10px;}
+  #clearFilters{
+    background:var(--blue-pale);color:var(--blue-main);border:none;
+    padding:9px 16px;border-radius:12px;font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:12.5px;cursor:pointer;
+  }
+  #clearFilters:hover{background:var(--blue-lightest);}
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:920px;}
+  thead th{
+    text-align:left;
+    font-size:11px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.5px;
+    padding:0 10px 10px;
+    border-bottom:2px solid var(--blue-pale);
+  }
+  tbody td{padding:12px 10px;border-bottom:1px solid var(--blue-pale);font-weight:600;color:var(--ink);}
+  tbody tr:hover{background:var(--cream);}
+  tfoot .totals-row td{
+    padding:13px 10px;
+    font-weight:800;
+    color:var(--white);
+    background:var(--blue-deep);
+    border-bottom:none;
+  }
+  tfoot .totals-row td:first-child{border-radius:0 0 0 14px; text-transform:uppercase; font-size:11.5px; letter-spacing:0.6px;}
+  tfoot .totals-row td:last-child{border-radius:0 0 14px 0;}
+  tfoot .totals-row td.num{color:var(--white);}
+  .cat-pill{
+    display:inline-block;padding:4px 10px;border-radius:9px;
+    font-size:11px;font-weight:800;background:var(--blue-pale);color:var(--blue-main);
+  }
+  .seg-pill{
+    display:inline-block;padding:4px 10px;border-radius:9px;
+    font-size:11px;font-weight:700;background:var(--white);color:var(--blue-soft);
+    border:1.3px solid var(--blue-lightest);
+  }
+  .estado-pill{padding:4px 10px;border-radius:9px;font-size:11px;font-weight:800;}
+  .estado-pill.Pagado{background:var(--blue-main);color:var(--white);}
+  .estado-pill.Parcial{background:var(--blue-pale);color:var(--blue-main);border:1.5px solid var(--blue-main);}
+  .estado-pill.Proximo{background:var(--white);color:var(--blue-deep);border:1.5px dashed var(--blue-lightest);}
+  .num{font-family:'Manrope',sans-serif;font-weight:800;color:var(--blue-deep);}
+  .num.pend{color:var(--blue-deep);}
+  .no-rows{padding:26px 10px;text-align:center;color:var(--grey);font-weight:600;font-size:13px;}
+
+  @media (max-width:1050px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .charts-row{grid-template-columns:1fr;}
+  }
+  @media (max-width:760px){
+    .sidebar{position:relative;width:100%;height:auto;}
+    main{margin-left:0;padding:24px 18px 50px;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="badge">
+      <svg viewBox="0 0 447 447" xmlns="http://www.w3.org/2000/svg" class="murh-mark"><g transform="translate(0.000000,447.000000) scale(0.100000,-0.100000)" fill="#ffffff" stroke="none"><path d="M0 2235 l0 -2235 2235 0 2235 0 0 2235 0 2235 -2235 0 -2235 0 0
+-2235z m2077 1149 c120 -57 196 -221 164 -351 -7 -26 -34 -95 -61 -153 -64
+-139 -75 -216 -55 -370 16 -123 11 -169 -24 -218 -47 -67 -177 -58 -239 17
+-33 39 -62 118 -62 166 0 76 14 114 111 316 75 154 91 195 91 234 0 60 -22 85
+-73 85 -32 0 -40 -5 -57 -32 -11 -18 -22 -46 -26 -61 -4 -16 -18 -40 -32 -54
+-27 -27 -46 -27 -118 0 -69 26 -112 -4 -130 -89 -8 -35 8 -90 60 -206 57 -126
+56 -254 -1 -384 -90 -204 -303 -226 -356 -37 -14 50 -9 72 65 278 54 151 49
+239 -23 390 -44 92 -61 145 -61 196 0 97 71 216 147 245 102 39 221 -31 254
+-149 15 -55 37 -45 77 33 47 92 57 105 97 136 66 50 156 53 252 8z m480 -25
+c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
+-16 -60 35 -121 76 -90 9 6 25 52 36 106 27 126 57 186 128 249 121 109 135
+125 163 185 16 33 33 86 39 116 13 70 28 98 62 116 61 31 168 2 212 -59 30
+-41 33 -145 7 -219 -43 -123 -118 -203 -300 -321 -85 -55 -105 -94 -130 -255
+-22 -137 -47 -201 -95 -236 -75 -57 -186 -61 -259 -10 -53 38 -111 136 -134
+228 -23 94 -8 193 46 319 53 124 61 156 61 267 0 189 51 284 170 321 37 11 73
+10 107 -2z m505 -649 c27 -33 23 -48 -27 -94 -42 -38 -47 -47 -55 -109 -13
+-92 -32 -132 -70 -152 -62 -32 -121 4 -139 84 -17 77 18 200 72 249 59 55 182
+67 219 22z m118 -115 c44 -40 44 -163 1 -258 -31 -66 -84 -100 -166 -105 -58
+-4 -66 -2 -89 21 -31 31 -33 51 -7 75 10 9 31 28 45 41 14 13 28 33 30 45 27
+152 39 179 86 202 26 14 73 3 100 -21z m-1303 -359 c32 -20 63 -78 63 -115 0
+-35 -30 -90 -62 -114 -18 -13 -60 -34 -92 -47 -59 -24 -135 -75 -168 -114 -10
+-12 -23 -37 -29 -57 -10 -31 -7 -46 21 -125 86 -241 104 -351 75 -449 -48
+-167 -247 -206 -329 -65 -29 49 -27 180 3 324 37 172 26 234 -64 360 -42 57
+-45 99 -14 164 46 94 127 106 225 32 30 -23 61 -39 68 -37 8 3 16 25 20 49 15
+97 88 199 154 214 15 3 32 7 37 9 19 6 60 -7 92 -29z m965 14 c45 -13 85 -58
+94 -107 10 -54 -32 -128 -120 -210 -39 -36 -79 -77 -88 -92 -35 -52 -13 -139
+31 -127 60 17 138 27 169 21 79 -15 148 -74 178 -151 17 -46 17 -48 -7 -118
+-30 -87 -30 -162 0 -230 27 -62 21 -98 -23 -131 -106 -81 -260 -71 -316 20
+-52 85 -48 143 16 209 30 32 44 55 44 74 0 70 -83 136 -141 112 -31 -13 -75
+-71 -95 -127 -7 -21 -13 -79 -14 -130 0 -103 -11 -138 -51 -159 -35 -18 -120
+-18 -162 0 -44 18 -95 78 -103 122 -10 56 3 157 28 216 12 29 53 91 91 138 93
+116 132 198 162 345 27 129 40 163 93 238 33 46 68 71 122 88 35 10 50 10 92
+-1z m-528 -140 c151 -93 140 -244 -31 -432 -107 -118 -136 -191 -113 -293 34
+-157 20 -201 -82 -255 -80 -43 -153 -13 -201 80 -23 44 -27 64 -23 97 8 60 40
+150 102 288 61 135 65 169 34 260 -24 70 -25 113 -5 163 21 49 51 80 100 104
+54 25 169 19 219 -12z"/></g></svg>
+    </div>
+    <div class="brand-text">MURH<span>Hipódromo · Panel</span></div>
+  </div>
+
+  <div class="menu-label">Módulos financieros</div>
+  <ul class="menu">
+    <li><a class="active" href="inversion.html"><span class="dot"></span> Inversión</a></li>
+    <li><span class="disabled"><span class="dot"></span> Ventas <span class="tag">Próx.</span></span></li>
+    <li><span class="disabled"><span class="dot"></span> Costos operativos <span class="tag">Próx.</span></span></li>
+    <li><span class="disabled"><span class="dot"></span> Estado de resultados <span class="tag">Próx.</span></span></li>
+  </ul>
+
+  <div class="sidebar-foot">
+    <div class="who" id="whoami">Hola</div>
+    <a href="index.html">Cerrar sesión</a>
+  </div>
+</aside>
+
+<main>
+  <div class="topbar">
+    <div>
+      <h1>Inversión inicial</h1>
+      <p>Seguimiento de capital invertido para la apertura de MURH Hipódromo</p>
+    </div>
+    <div class="month-select">
+      <label for="monthFilter">Mes</label>
+      <select id="monthFilter"></select>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-field">
+      <label for="fConcepto">Concepto</label>
+      <input type="text" id="fConcepto" placeholder="Buscar…">
+    </div>
+    <div class="filter-field">
+      <label for="fCategoria">Categoría</label>
+      <select id="fCategoria"></select>
+    </div>
+    <div class="filter-field">
+      <label for="fSegmento">Segmento</label>
+      <select id="fSegmento"></select>
+    </div>
+    <div class="filter-field">
+      <label for="fProveedor">Tienda</label>
+      <select id="fProveedor"></select>
+    </div>
+    <div class="filter-field">
+      <label for="fEstado">Estado</label>
+      <select id="fEstado"></select>
+    </div>
+    <button id="clearFilters" type="button">Limpiar filtros</button>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi plan">
+      <div class="lbl">Inversión planeada</div>
+      <div class="val" id="kpiPlan">—</div>
+      <div class="sub" id="kpiPlanSub">&nbsp;</div>
+    </div>
+    <div class="kpi pagado">
+      <div class="lbl">Total pagado</div>
+      <div class="val" id="kpiPagado">—</div>
+      <div class="sub" id="kpiPagadoSub">&nbsp;</div>
+    </div>
+    <div class="kpi pendiente">
+      <div class="lbl">Total pendiente</div>
+      <div class="val" id="kpiPendiente">—</div>
+      <div class="sub" id="kpiPendienteSub">&nbsp;</div>
+    </div>
+    <div class="kpi avance">
+      <div class="lbl">% de avance</div>
+      <div class="val" id="kpiAvance">—</div>
+      <div class="sub" id="kpiAvanceSub">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="panel">
+      <h3>Pagado vs. pendiente por categoría</h3>
+      <div class="chart-box"><canvas id="catChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>Tendencia mensual de gastos</h3>
+      <div class="chart-box"><canvas id="trendChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="panel">
+      <h3>Proyección acumulada (plan vs. pagado)</h3>
+      <div class="chart-box"><canvas id="lineChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>Participación por categoría</h3>
+      <div class="chart-box"><canvas id="pieCatChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="panel">
+      <h3>Participación por segmento</h3>
+      <div class="chart-box"><canvas id="pieSegChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>Participación por tienda</h3>
+      <div class="chart-box"><canvas id="pieTiendaChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="table-panel">
+    <div class="table-head-row">
+      <h3>Detalle de partidas de inversión</h3>
+    </div>
+    <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Concepto</th>
+          <th>Categoría</th>
+          <th>Segmento</th>
+          <th>Tienda</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Pagado</th>
+          <th>Pendiente</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+      <tfoot>
+        <tr class="totals-row">
+          <td colspan="5">Totales</td>
+          <td class="num" id="totColTotal">—</td>
+          <td class="num" id="totColPagado">—</td>
+          <td class="num" id="totColPendiente">—</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ---------------- DATOS DE INVERSIÓN ---------------- */
+/* Actualiza este arreglo manualmente cada vez que haya nuevos gastos o pagos. */
+const ITEMS = [
+  { concepto:"Depósito", categoria:"Renta", segmento:"Renta", proveedor:"Sin tienda", mes:"2026-06", fecha:"2026-06-14", total:20000, pagado:20000 },
+  { concepto:"Mes junio", categoria:"Renta", segmento:"Renta", proveedor:"Sin tienda", mes:"2026-06", fecha:"2026-06-14", total:20000, pagado:20000 },
+  { concepto:"Traspaso", categoria:"Traspaso", segmento:"Traspaso", proveedor:"Sin tienda", mes:"2026-06", fecha:"2026-06-14", total:110000, pagado:110000 },
+  { concepto:"Pintura exterior", categoria:"Remodelación", segmento:"Pintura exterior", proveedor:"Home Depot", mes:"2026-06", fecha:"2026-06-15", total:1158, pagado:1158 },
+  { concepto:"Pintura exterior 2", categoria:"Remodelación", segmento:"Pintura exterior 2", proveedor:"Home Depot", mes:"2026-06", fecha:"2026-06-15", total:1508, pagado:1508 },
+  { concepto:"Producto piso", categoria:"Remodelación", segmento:"Piso interior", proveedor:"Home Depot", mes:"2026-06", fecha:"2026-06-29", total:6853, pagado:6853 },
+  { concepto:"Batidora", categoria:"Utensilio", segmento:"Batidora", proveedor:"Outlet", mes:"2026-07", fecha:"2026-07-01", total:2040, pagado:2040 },
+  { concepto:"Cajas para guardar", categoria:"Utensilio", segmento:"Cajas", proveedor:"Outlet", mes:"2026-07", fecha:"2026-07-01", total:450, pagado:450 },
+  { concepto:"Instalación de piso interior", categoria:"Remodelación", segmento:"Piso interior", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-02", total:6990, pagado:6990 },
+  { concepto:"Plomería interior", categoria:"Remodelación", segmento:"Plomería", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-04", total:7000, pagado:7000 },
+  { concepto:"Carpintería interior", categoria:"Remodelación", segmento:"Carpintería", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-06", total:20000, pagado:20000 },
+  { concepto:"Tapete", categoria:"Remodelación", segmento:"Decoración", proveedor:"Capital Industrial America", mes:"2026-07", fecha:"2026-07-06", total:1226.7, pagado:1226.7 },
+  { concepto:"Herrería exterior", categoria:"Remodelación", segmento:"Barandales", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-09", total:5600, pagado:5600 },
+  { concepto:"Mes julio", categoria:"Renta", segmento:"Renta", proveedor:"Sin tienda", mes:"2026-07", fecha:"2026-07-15", total:20000, pagado:20000 },
+  { concepto:"Loseta barra", categoria:"Remodelación", segmento:"Loseta barra", proveedor:"Ceramic Tile", mes:"2026-07", fecha:"2026-07-16", total:2146.18, pagado:2146.18 },
+  { concepto:"Sink", categoria:"Remodelación", segmento:"Sink", proveedor:"Petsa", mes:"2026-07", fecha:"2026-07-16", total:2419.41, pagado:2419.41 },
+  { concepto:"Banca", categoria:"Remodelación", segmento:"Banca", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-17", total:2350, pagado:2350 },
+  { concepto:"Lámpara colgante", categoria:"Remodelación", segmento:"Lámpara colgante", proveedor:"Home Depot", mes:"2026-07", fecha:"2026-07-17", total:1858, pagado:1858 },
+  { concepto:"Loseta exterior", categoria:"Remodelación", segmento:"Loseta exterior", proveedor:"Interceramic", mes:"2026-07", fecha:"2026-07-21", total:7708.52, pagado:7708.52 },
+  { concepto:"Vista tablaroca", categoria:"Remodelación", segmento:"Vista tablaroca", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-21", total:15500, pagado:15500 },
+  { concepto:"Iluminación interior", categoria:"Remodelación", segmento:"Iluminación", proveedor:"Amazon", mes:"2026-07", fecha:"2026-07-22", total:4348.98, pagado:4348.98 },
+  { concepto:"Letrero iluminación", categoria:"Remodelación", segmento:"Iluminación", proveedor:"Bragi", mes:"2026-07", fecha:"2026-07-24", total:11205, pagado:11205 },
+  { concepto:"Vitrina", categoria:"Utensilio", segmento:"Vitrina", proveedor:"Amazon", mes:"2026-07", fecha:"2026-07-25", total:15000, pagado:0 },
+  { concepto:"Máquina", categoria:"Utensilio", segmento:"Máquina", proveedor:"Amazon", mes:"2026-07", fecha:"2026-07-25", total:120000, pagado:0 },
+  { concepto:"Refrigerador", categoria:"Utensilio", segmento:"Refrigerador", proveedor:"Amazon", mes:"2026-07", fecha:"2026-07-25", total:5000, pagado:0 },
+  { concepto:"Congelador", categoria:"Utensilio", segmento:"Congelador", proveedor:"Amazon", mes:"2026-07", fecha:"2026-07-25", total:5000, pagado:0 },
+  { concepto:"Molino", categoria:"Utensilio", segmento:"Molino", proveedor:"Amazon", mes:"2026-07", fecha:"2026-07-25", total:20000, pagado:0 },
+  { concepto:"Letrero iluminación 2", categoria:"Remodelación", segmento:"Iluminación 2", proveedor:"Bragi", mes:"2026-07", fecha:"2026-07-25", total:11205, pagado:0 },
+  { concepto:"Cámaras de seguridad", categoria:"Seguridad", segmento:"Cámaras", proveedor:"Camara", mes:"2026-07", fecha:"2026-07-25", total:22450, pagado:0 },
+  { concepto:"Tapete 2", categoria:"Remodelación", segmento:"Tapete", proveedor:"Capital Industrial America", mes:"2026-07", fecha:"2026-07-25", total:1226.7, pagado:0 },
+  { concepto:"Carpintería interior 2", categoria:"Remodelación", segmento:"Carpintería", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:20000, pagado:0 },
+  { concepto:"Vista tablaroca 2", categoria:"Remodelación", segmento:"Vista tablaroca 2", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:15500, pagado:0 },
+  { concepto:"Plomería interior 2", categoria:"Remodelación", segmento:"Plomería 2", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:7000, pagado:0 },
+  { concepto:"Losetero", categoria:"Remodelación", segmento:"Losetero", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:7000, pagado:0 },
+  { concepto:"Instalación barandal terraza", categoria:"Remodelación", segmento:"Barandales", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:10000, pagado:0 },
+  { concepto:"Baño", categoria:"Remodelación", segmento:"Baño", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:50000, pagado:0 },
+  { concepto:"Escaleras", categoria:"Remodelación", segmento:"Barandales", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:25000, pagado:0 },
+  { concepto:"Piso terraza", categoria:"Remodelación", segmento:"Piso exterior", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:15000, pagado:0 },
+  { concepto:"Bancas terraza", categoria:"Remodelación", segmento:"Banca", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:7000, pagado:0 },
+  { concepto:"Decoración", categoria:"Remodelación", segmento:"Decoración", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:3500, pagado:0 },
+  { concepto:"Gastos de inicio", categoria:"Operación", segmento:"Operación", proveedor:"Murih", mes:"2026-07", fecha:"2026-07-25", total:35000, pagado:0 },
+];
+
+const MESES_NOMBRE = {"01":"Enero","02":"Febrero","03":"Marzo","04":"Abril","05":"Mayo","06":"Junio","07":"Julio","08":"Agosto","09":"Septiembre","10":"Octubre","11":"Noviembre","12":"Diciembre"};
+
+function fmtMoney(n){
+  return "$" + Math.round(n).toLocaleString("es-MX");
+}
+function fmtFecha(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString("es-MX", { day:"2-digit", month:"short", year:"numeric" });
+}
+function estadoDe(item){
+  if(item.pagado >= item.total) return "Pagado";
+  if(item.pagado > 0) return "Parcial";
+  return "Proximo";
+}
+function estadoLabel(item){
+  const e = estadoDe(item);
+  return e === "Proximo" ? "Próximo" : e;
+}
+
+/* ---------------- USUARIO ---------------- */
+const params = new URLSearchParams(window.location.search);
+const usuario = params.get('user') || 'Usuario';
+document.getElementById('whoami').textContent = "Hola, " + usuario;
+
+/* ---------------- SELECT DE MESES ---------------- */
+const mesesUnicos = [...new Set(ITEMS.map(i => i.mes))].sort();
+const selMonth = document.getElementById('monthFilter');
+selMonth.innerHTML = '<option value="all">Todos los meses</option>' +
+  mesesUnicos.map(m => {
+    const [y, mm] = m.split("-");
+    return `<option value="${m}">${MESES_NOMBRE[mm]} ${y}</option>`;
+  }).join("");
+
+/* ---------------- FILTROS DE COLUMNA ---------------- */
+function unique(field){ return [...new Set(ITEMS.map(i=>i[field]))].sort((a,b)=>a.localeCompare(b,'es')); }
+
+const fCategoria = document.getElementById('fCategoria');
+const fSegmento = document.getElementById('fSegmento');
+const fProveedor = document.getElementById('fProveedor');
+const fEstado = document.getElementById('fEstado');
+const fConcepto = document.getElementById('fConcepto');
+
+fCategoria.innerHTML = '<option value="all">Categoría (todas)</option>' + unique('categoria').map(v=>`<option value="${v}">${v}</option>`).join("");
+fSegmento.innerHTML = '<option value="all">Segmento (todos)</option>' + unique('segmento').map(v=>`<option value="${v}">${v}</option>`).join("");
+fProveedor.innerHTML = '<option value="all">Tienda (todas)</option>' + unique('proveedor').map(v=>`<option value="${v}">${v}</option>`).join("");
+fEstado.innerHTML = '<option value="all">Estado (todos)</option>' + ["Pagado","Parcial","Proximo"].map(v=>`<option value="${v}">${v==="Proximo"?"Próximo":v}</option>`).join("");
+
+let catChart, lineChart, trendChart, pieCatChart, pieSegChart, pieTiendaChart;
+const pieBluePalette = ['#14366B','#215AB3','#4D7BC2','#8FAEDA','#C8D6EC','#6690CC','#1E4A94','#A9C2E8'];
+
+function pieTooltip(ctx){
+  const tot = ctx.dataset.data.reduce((a,b)=>a+b,0);
+  const pct = tot>0 ? (ctx.parsed/tot*100).toFixed(1) : 0;
+  return ` ${ctx.label}: ${fmtMoney(ctx.parsed)} (${pct}%)`;
+}
+
+function render(){
+  /* ---- un solo conjunto de filtros: mes + columnas — alimenta TODO el tablero ---- */
+  const monthVal = selMonth.value;
+  const catVal = fCategoria.value;
+  const segVal = fSegmento.value;
+  const provVal = fProveedor.value;
+  const estVal = fEstado.value;
+  const concVal = fConcepto.value.trim().toLowerCase();
+
+  const filtered = ITEMS.filter(i =>
+    (monthVal === "all" || i.mes === monthVal) &&
+    (catVal === "all" || i.categoria === catVal) &&
+    (segVal === "all" || i.segmento === segVal) &&
+    (provVal === "all" || i.proveedor === provVal) &&
+    (estVal === "all" || estadoDe(i) === estVal) &&
+    (concVal === "" || i.concepto.toLowerCase().includes(concVal))
+  );
+
+  const totalPlan = filtered.reduce((s,i)=>s+i.total,0);
+  const totalPagado = filtered.reduce((s,i)=>s+i.pagado,0);
+  const totalPendiente = totalPlan - totalPagado;
+  const avance = totalPlan > 0 ? (totalPagado/totalPlan*100) : 0;
+
+  document.getElementById('kpiPlan').textContent = fmtMoney(totalPlan);
+  document.getElementById('kpiPlan').parentElement.querySelector('.sub').textContent = filtered.length + " partidas";
+  document.getElementById('kpiPagado').textContent = fmtMoney(totalPagado);
+  document.getElementById('kpiPagado').parentElement.querySelector('.sub').textContent = filtered.filter(i=>estadoDe(i)==="Pagado").length + " liquidadas";
+  document.getElementById('kpiPendiente').textContent = fmtMoney(totalPendiente);
+  document.getElementById('kpiPendiente').parentElement.querySelector('.sub').textContent = filtered.filter(i=>estadoDe(i)!=="Pagado").length + " por cubrir";
+  document.getElementById('kpiAvance').textContent = avance.toFixed(1) + "%";
+  document.getElementById('kpiAvance').parentElement.querySelector('.sub').textContent = "sobre inversión planeada";
+
+  /* ---- pagado vs. pendiente por categoría ---- */
+  const categorias = [...new Set(filtered.map(i=>i.categoria))];
+  const catPagado = categorias.map(c => filtered.filter(i=>i.categoria===c).reduce((s,i)=>s+i.pagado,0));
+  const catPendiente = categorias.map(c => filtered.filter(i=>i.categoria===c).reduce((s,i)=>s+(i.total-i.pagado),0));
+
+  const catCtx = document.getElementById('catChart').getContext('2d');
+  if(catChart) catChart.destroy();
+  catChart = new Chart(catCtx, {
+    type: 'bar',
+    data: {
+      labels: categorias,
+      datasets: [
+        { label:'Pagado', data: catPagado, backgroundColor:'#14366B', borderRadius:8, maxBarThickness:26 },
+        { label:'Pendiente', data: catPendiente, backgroundColor:'#C8D6EC', borderRadius:8, maxBarThickness:26 }
+      ]
+    },
+    options: {
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{ family:'Manrope', weight:700 }, boxWidth:12 } } },
+      scales:{
+        x:{ stacked:true, grid:{ color:'#E9EFF7' }, ticks:{ callback:v=>'$'+(v/1000)+'k', font:{family:'Manrope'} } },
+        y:{ stacked:true, grid:{ display:false }, ticks:{ font:{family:'Manrope', weight:700}, color:'#14366B' } }
+      }
+    }
+  });
+
+  /* ---- meses presentes en el conjunto filtrado (para tendencia y proyección) ---- */
+  const mesesFiltrados = [...new Set(filtered.map(i=>i.mes))].sort();
+  const labels = mesesFiltrados.map(m=>{ const [y,mm]=m.split("-"); return MESES_NOMBRE[mm].slice(0,3)+" "+y.slice(2); });
+
+  /* ---- tendencia mensual de gastos (no acumulado, por mes) ---- */
+  const trendCtx = document.getElementById('trendChart').getContext('2d');
+  const mesPagadoArr = [], mesPendienteArr = [];
+  mesesFiltrados.forEach(m=>{
+    const itemsMes = filtered.filter(i=>i.mes===m);
+    mesPagadoArr.push(itemsMes.reduce((s,i)=>s+i.pagado,0));
+    mesPendienteArr.push(itemsMes.reduce((s,i)=>s+(i.total-i.pagado),0));
+  });
+  if(trendChart) trendChart.destroy();
+  trendChart = new Chart(trendCtx, {
+    type:'bar',
+    data:{
+      labels: labels,
+      datasets:[
+        { label:'Pagado', data:mesPagadoArr, backgroundColor:'#14366B', borderRadius:8, maxBarThickness:46 },
+        { label:'Pendiente', data:mesPendienteArr, backgroundColor:'#C8D6EC', borderRadius:8, maxBarThickness:46 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Manrope', weight:700}, boxWidth:12 } } },
+      scales:{
+        x:{ stacked:true, grid:{display:false}, ticks:{ font:{family:'Manrope', weight:700}, color:'#14366B' } },
+        y:{ stacked:true, grid:{color:'#E9EFF7'}, ticks:{ callback:v=>'$'+(v/1000)+'k', font:{family:'Manrope'} } }
+      }
+    }
+  });
+
+  /* ---- proyección acumulada por mes ---- */
+  const lineCtx = document.getElementById('lineChart').getContext('2d');
+  let accPlan = 0, accPagado = 0;
+  const dataPlan = [], dataPagado = [];
+  mesesFiltrados.forEach(m=>{
+    const itemsMes = filtered.filter(i=>i.mes===m);
+    accPlan += itemsMes.reduce((s,i)=>s+i.total,0);
+    accPagado += itemsMes.reduce((s,i)=>s+i.pagado,0);
+    dataPlan.push(accPlan);
+    dataPagado.push(accPagado);
+  });
+  if(lineChart) lineChart.destroy();
+  lineChart = new Chart(lineCtx, {
+    type:'line',
+    data:{
+      labels: labels,
+      datasets:[
+        { label:'Inversión planeada (acum.)', data:dataPlan, borderColor:'#215AB3', backgroundColor:'rgba(33,90,179,0.10)', fill:true, tension:0.35, borderWidth:3, pointRadius:4, pointBackgroundColor:'#215AB3' },
+        { label:'Pagado real (acum.)', data:dataPagado, borderColor:'#14366B', backgroundColor:'rgba(20,54,107,0.12)', fill:true, tension:0.35, borderWidth:3, pointRadius:4, pointBackgroundColor:'#14366B' }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Manrope', weight:700}, boxWidth:12 } } },
+      scales:{
+        y:{ grid:{color:'#E9EFF7'}, ticks:{ callback:v=>'$'+(v/1000)+'k', font:{family:'Manrope'} } },
+        x:{ grid:{display:false}, ticks:{ font:{family:'Manrope', weight:700}, color:'#14366B' } }
+      }
+    }
+  });
+
+  /* ---- participación por categoría (pastel) ---- */
+  const pieCatCtx = document.getElementById('pieCatChart').getContext('2d');
+  const catTotales = categorias.map(c => filtered.filter(i=>i.categoria===c).reduce((s,i)=>s+i.total,0));
+  if(pieCatChart) pieCatChart.destroy();
+  pieCatChart = new Chart(pieCatCtx, {
+    type:'doughnut',
+    data:{ labels: categorias, datasets:[{ data: catTotales, backgroundColor: pieBluePalette, borderColor:'#FFFFFF', borderWidth:2 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ font:{family:'Manrope', weight:700}, boxWidth:11, padding:10 } },
+        tooltip:{ callbacks:{ label:pieTooltip } }
+      }
+    }
+  });
+
+  /* ---- participación por segmento (pastel) ---- */
+  const pieSegCtx = document.getElementById('pieSegChart').getContext('2d');
+  const segmentosF = [...new Set(filtered.map(i=>i.segmento))];
+  const segTotales = segmentosF.map(s => filtered.filter(i=>i.segmento===s).reduce((sum,i)=>sum+i.total,0));
+  if(pieSegChart) pieSegChart.destroy();
+  pieSegChart = new Chart(pieSegCtx, {
+    type:'doughnut',
+    data:{ labels: segmentosF, datasets:[{ data: segTotales, backgroundColor: pieBluePalette.concat(pieBluePalette), borderColor:'#FFFFFF', borderWidth:2 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ font:{family:'Manrope', weight:700, size:10.5}, boxWidth:11, padding:8 } },
+        tooltip:{ callbacks:{ label:pieTooltip } }
+      }
+    }
+  });
+
+  /* ---- participación por tienda (pastel) ---- */
+  const pieTiendaCtx = document.getElementById('pieTiendaChart').getContext('2d');
+  const tiendasF = [...new Set(filtered.map(i=>i.proveedor))];
+  const tiendaTotales = tiendasF.map(t => filtered.filter(i=>i.proveedor===t).reduce((sum,i)=>sum+i.total,0));
+  if(pieTiendaChart) pieTiendaChart.destroy();
+  pieTiendaChart = new Chart(pieTiendaCtx, {
+    type:'doughnut',
+    data:{ labels: tiendasF, datasets:[{ data: tiendaTotales, backgroundColor: pieBluePalette.concat(pieBluePalette), borderColor:'#FFFFFF', borderWidth:2 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{ font:{family:'Manrope', weight:700, size:10.5}, boxWidth:11, padding:8 } },
+        tooltip:{ callbacks:{ label:pieTooltip } }
+      }
+    }
+  });
+
+  /* ---- tabla detalle + totales (mismo conjunto filtrado) ---- */
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = filtered.map(i=>{
+    const est = estadoDe(i);
+    const pend = i.total - i.pagado;
+    return `
+      <tr>
+        <td>${i.concepto}</td>
+        <td><span class="cat-pill">${i.categoria}</span></td>
+        <td><span class="seg-pill">${i.segmento}</span></td>
+        <td>${i.proveedor}</td>
+        <td>${fmtFecha(i.fecha)}</td>
+        <td class="num">${fmtMoney(i.total)}</td>
+        <td class="num">${fmtMoney(i.pagado)}</td>
+        <td class="num ${pend>0?'pend':''}">${fmtMoney(pend)}</td>
+        <td><span class="estado-pill ${est}">${estadoLabel(i)}</span></td>
+      </tr>`;
+  }).join("") || '<tr><td colspan="9" class="no-rows">No hay partidas que coincidan con los filtros.</td></tr>';
+
+  document.getElementById('totColTotal').textContent = fmtMoney(totalPlan);
+  document.getElementById('totColPagado').textContent = fmtMoney(totalPagado);
+  document.getElementById('totColPendiente').textContent = fmtMoney(totalPendiente);
+}
+
+[fCategoria, fSegmento, fProveedor, fEstado].forEach(el => el.addEventListener('change', render));
+fConcepto.addEventListener('input', render);
+document.getElementById('clearFilters').addEventListener('click', ()=>{
+  fCategoria.value = 'all';
+  fSegmento.value = 'all';
+  fProveedor.value = 'all';
+  fEstado.value = 'all';
+  fConcepto.value = '';
+  render();
+});
+
+selMonth.addEventListener('change', render);
+render();
+</script>
+</body>
+</html>
