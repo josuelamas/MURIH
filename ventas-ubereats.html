@@ -355,6 +355,7 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
         <option value="8">Sin IVA 8%</option>
       </select>
     </div>
+    <div class="filter-field"><label for="fCategoria">Categoría</label><select id="fCategoria"></select></div>
     <div class="filter-field"><label for="fProducto">Producto</label><input type="text" id="fProducto" placeholder="Buscar…"></div>
     <button id="clearFilters" type="button">Limpiar filtros</button>
     <button id="exportExcel" type="button">⬇ Exportar a Excel</button>
@@ -375,12 +376,20 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
   </div>
 
   <div class="charts-row">
-    <div class="panel"><h3>Uber Eats vs. cafetería por día</h3><div class="chart-box tall"><canvas id="dayChart"></canvas></div></div>
-    <div class="panel"><h3>Ventas por día de la semana</h3><div class="chart-box tall"><canvas id="wkChart"></canvas></div></div>
+    <div class="panel"><h3>Tendencia de ventas diarias</h3><div class="chart-box tall"><canvas id="dayChart"></canvas></div></div>
+    <div class="panel"><h3>Tendencia por mes</h3><div class="chart-box tall"><canvas id="monthChart"></canvas></div></div>
   </div>
   <div class="charts-row">
-    <div class="panel"><h3>Top 10 productos · Uber vs. cafetería ($)</h3><div class="chart-box tall"><canvas id="topChart"></canvas></div></div>
-    <div class="panel"><h3>Diferencia por producto · top 10 ($)</h3><div class="chart-box tall"><canvas id="difChart"></canvas></div></div>
+    <div class="panel"><h3>Top 10 productos (venta $)</h3><div class="chart-box tall"><canvas id="topChart"></canvas></div></div>
+    <div class="panel"><h3>Participación por categoría (venta $)</h3><div class="chart-box tall"><canvas id="pieCatChart"></canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="panel"><h3>Unidades vendidas por producto</h3><div class="chart-box tall"><canvas id="unitsProdChart"></canvas></div></div>
+    <div class="panel"><h3>Unidades vendidas por categoría</h3><div class="chart-box tall"><canvas id="unitsCatChart"></canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="panel"><h3>Ventas por día de la semana</h3><div class="chart-box"><canvas id="wkChart"></canvas></div></div>
+    <div class="panel"><h3>Detalle de Foam (por sabor)</h3><div class="chart-box"><canvas id="pieFoamChart"></canvas></div></div>
   </div>
 
   <div class="table-panel">
@@ -388,12 +397,12 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
     <div class="table-scroll">
     <table>
       <thead><tr>
-        <th>Producto</th><th>Piezas</th><th>Precio Uber prom.</th><th>Precio cafetería</th>
+        <th>Producto</th><th>Categoría</th><th>Piezas</th><th>Precio Uber prom.</th><th>Precio cafetería</th>
         <th>Venta Uber</th><th>A precio cafetería</th><th>Diferencia</th><th>Sobreprecio</th>
       </tr></thead>
       <tbody id="tBody"></tbody>
       <tfoot><tr class="totals-row">
-        <td>Totales</td><td class="num" id="tPzas">—</td><td></td><td></td>
+        <td colspan="2">Totales</td><td class="num" id="tPzas">—</td><td></td><td></td>
         <td class="num" id="tUber">—</td><td class="num" id="tCafe">—</td><td class="num" id="tDif">—</td><td class="num" id="tPct">—</td>
       </tr></tfoot>
     </table>
@@ -449,13 +458,22 @@ function fmtFecha(iso){ return new Date(iso+"T00:00:00").toLocaleDateString("es-
 const DIAS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 const diaDe = iso => DIAS[(new Date(iso+"T00:00:00").getDay()+6)%7];
 VENTAS_UE.forEach(r => r.dia = diaDe(r.f));
+const CAT_POR_ID = {1:'Café',2:'Chai',3:'Tónico y limonada',4:'Postres',5:'Café',6:'Matcha',7:'Café',8:'Café',9:'Matcha',10:'Matcha',11:'Café',12:'Postres',13:'Postres',14:'Tónico y limonada',15:'Tónico y limonada',16:'Postres',17:'Chai',18:'Postres',19:'Postres',20:'Postres',21:'Postres',22:'Chai',23:'Café',24:'Chai',25:'Café',26:'Tisana',27:'Otros',28:'Otros',29:'Otros',30:'Café',31:'Tónico y limonada',32:'Tisana',33:'Postres',34:'Café'};
+const FOAM_POR_ID = {1:'Lotus',2:'Lotus',6:'Lotus',7:'Plátano',9:'Plátano',17:'Plátano',8:'Coco',10:'Coco',24:'Coco'};
+VENTAS_UE.forEach(r => { r.cat = CAT_POR_ID[r.id] || 'Otros'; r.foam = FOAM_POR_ID[r.id] || null; });
+const CHART_PALETTE=['#215AB3','#E76F51','#2A9D8F','#E9A23B','#8E44AD','#4D7BC2','#D62839','#588157','#B5838D','#457B9D'];
+const moneyLabel = v => v>=1000 ? '$'+(v/1000).toFixed(1)+'k' : fmtMoney(v);
+const kTick = v => '$'+(v/1000).toFixed(1)+'k';
+const FONT = {family:'Manrope', weight:800, size:11};
+
 
 const fMargen=document.getElementById('fMargen'), fBase=document.getElementById('fBase');
-const fMes=document.getElementById('fMes');
+const fMes=document.getElementById('fMes'), fCategoria=document.getElementById('fCategoria');
 const MESES={'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
 const fDia=document.getElementById('fDia'), fFecha=document.getElementById('fFecha'), fIva=document.getElementById('fIva'), fProducto=document.getElementById('fProducto');
 const fechas=[...new Set(VENTAS_UE.map(r=>r.f))].sort();
 fMes.innerHTML='<option value="all">Todos</option>'+[...new Set(VENTAS_UE.map(r=>r.f.slice(0,7)))].sort().map(m=>`<option value="${m}">${MESES[m.slice(5)]} ${m.slice(0,4)}</option>`).join('');
+fCategoria.innerHTML='<option value="all">Categoría (todas)</option>'+[...new Set(VENTAS_UE.map(r=>r.cat))].sort((a,b)=>a.localeCompare(b,'es')).map(c=>`<option value="${c}">${c}</option>`).join('');
 fDia.innerHTML='<option value="all">Todos</option>'+DIAS.map(d=>`<option value="${d}">${d}</option>`).join('');
 fFecha.innerHTML='<option value="all">Todos</option>'+fechas.map(f=>`<option value="${f}">${fmtFecha(f)} · ${diaDe(f).slice(0,3)}</option>`).join('');
 
@@ -471,6 +489,7 @@ function render(){
   const q = fProducto.value.trim().toLowerCase();
   const rows = VENTAS_UE.filter(r =>
     (fMes.value==='all'||r.f.slice(0,7)===fMes.value) &&
+    (fCategoria.value==='all'||r.cat===fCategoria.value) &&
     (fDia.value==='all'||r.dia===fDia.value) &&
     (fFecha.value==='all'||r.f===fFecha.value) &&
     (!q || r.p.toLowerCase().includes(q))
@@ -491,42 +510,75 @@ function render(){
 
   // por producto
   const mp={};
-  rows.forEach(r=>{ const o=mp[r.p]||(mp[r.p]={p:r.p,q:0,uber:0,cafe:0,pc:r.c/div}); o.q+=r.q;o.uber+=r.uber;o.cafe+=r.cafe; });
+  rows.forEach(r=>{ const o=mp[r.p]||(mp[r.p]={p:r.p,cat:r.cat,q:0,uber:0,cafe:0,pc:r.c/div}); o.q+=r.q;o.uber+=r.uber;o.cafe+=r.cafe; });
   const prods=Object.values(mp).sort((a,b)=>b.uber-a.uber);
   set('kTop', prods.length?prods.slice().sort((a,b)=>b.q-a.q)[0].p:'—', prods.length?prods.slice().sort((a,b)=>b.q-a.q)[0].q+' piezas':'');
   document.getElementById('tBody').innerHTML = prods.map(o=>{
     const d=o.uber-o.cafe;
-    return `<tr><td>${o.p}</td><td class="num">${o.q}</td><td class="num">${fmtMoney(o.uber/o.q)}</td><td class="num">${fmtMoney(o.pc)}</td><td class="num">${fmtMoney(o.uber)}</td><td class="num">${fmtMoney(o.cafe)}</td><td class="num" style="color:${d<0?'#D62839':'inherit'}">${fmtMoney(d)}</td><td class="num">${o.cafe?(d/o.cafe*100).toFixed(1)+'%':'—'}</td></tr>`;
+    return `<tr><td>${o.p}</td><td><span class="cat-pill">${o.cat}</span></td><td class="num">${o.q}</td><td class="num">${fmtMoney(o.uber/o.q)}</td><td class="num">${fmtMoney(o.pc)}</td><td class="num">${fmtMoney(o.uber)}</td><td class="num">${fmtMoney(o.cafe)}</td><td class="num" style="color:${d<0?'#D62839':'inherit'}">${fmtMoney(d)}</td><td class="num">${o.cafe?(d/o.cafe*100).toFixed(1)+'%':'—'}</td></tr>`;
   }).join('');
   set('tPzas',pzas.toLocaleString('es-MX')); set('tUber',fmtMoney(uber)); set('tCafe',fmtMoney(cafe)); set('tDif',fmtMoney(dif)); set('tPct',cafe?(dif/cafe*100).toFixed(1)+'%':'—');
 
   // por día
   const md={}; rows.forEach(r=>{const o=md[r.f]||(md[r.f]={uber:0,cafe:0}); o.uber+=r.uber;o.cafe+=r.cafe;});
   const fd=Object.keys(md).sort();
-  mk('dayChart',{type:'bar',data:{labels:fd.map(fmtFecha),datasets:[
-    {label:'Uber Eats',data:fd.map(f=>md[f].uber),backgroundColor:C_UBER},
-    {label:'A precio cafetería',data:fd.map(f=>md[f].cafe),backgroundColor:C_CAFE}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:{display:false},legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}});
+  const short=s=>s.length>30?s.slice(0,29)+'…':s;
+  const stackedOpts=(maxRot)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},
+    plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700},boxWidth:12}},datalabels:{display:false}},
+    scales:{x:{stacked:true,grid:{display:false},ticks:{font:{family:'Manrope',weight:700},color:'#14366B',maxRotation:maxRot,autoSkip:true}},
+            y:{stacked:true,grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}});
+  const stackedData=(labels,get)=>({labels,datasets:[
+    {type:'bar',label:'A precio cafetería',data:labels.map((_,i)=>get(i).cafe),backgroundColor:C_CAFE,borderRadius:6,stack:'v',maxBarThickness:60},
+    {type:'bar',label:'Diferencia Uber',data:labels.map((_,i)=>get(i).uber-get(i).cafe),backgroundColor:C_DIF,borderRadius:6,stack:'v',maxBarThickness:60},
+    {type:'line',label:'Total Uber Eats',data:labels.map((_,i)=>get(i).uber),borderColor:C_UBER,backgroundColor:C_UBER,tension:0.35,borderWidth:3,pointRadius:3,
+      datalabels:{display:labels.length<=12,align:'top',anchor:'end',color:C_UBER,font:FONT,formatter:moneyLabel}}]});
+  mk('dayChart',{data:stackedData(fd.map(fmtFecha),i=>md[fd[i]]),options:stackedOpts(0)});
 
-  // por día de semana
-  const mw={}; rows.forEach(r=>{const o=mw[r.dia]||(mw[r.dia]={uber:0,cafe:0}); o.uber+=r.uber;o.cafe+=r.cafe;});
-  const wd=DIAS.filter(d=>mw[d]);
-  mk('wkChart',{type:'bar',data:{labels:wd,datasets:[
-    {label:'Uber Eats',data:wd.map(d=>mw[d].uber),backgroundColor:C_UBER},
-    {label:'A precio cafetería',data:wd.map(d=>mw[d].cafe),backgroundColor:C_CAFE}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:dl({anchor:'end',align:'end'}),legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}});
+  // por mes
+  const mm={}; rows.forEach(r=>{const k=r.f.slice(0,7); const o=mm[k]||(mm[k]={uber:0,cafe:0}); o.uber+=r.uber;o.cafe+=r.cafe;});
+  const fm=Object.keys(mm).sort();
+  const mLabels=fm.map(k=>MESES[k.slice(5)].slice(0,3)+' '+k.slice(2,4));
+  const mData=stackedData(mLabels,i=>mm[fm[i]]);
+  mData.datasets[2].datalabels={display:true,align:'top',anchor:'end',color:C_UBER,font:FONT,formatter:moneyLabel};
+  mData.datasets[2].showLine=false; mData.datasets[2].pointRadius=0; mData.datasets[2].pointHoverRadius=0;
+  [0,1].forEach(i=>{mData.datasets[i].datalabels={display:true,anchor:'center',align:'center',color:i?'#FFFFFF':'#14366B',font:FONT,formatter:moneyLabel};});
+  mk('monthChart',{data:mData,options:stackedOpts(0)});
 
-  // top 10
+  // top 10 productos (venta $)
+  const hbar=(labels,vals,off,fmt)=>({type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>CHART_PALETTE[(i+off)%CHART_PALETTE.length]),borderRadius:6,maxBarThickness:20}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:40}},plugins:{legend:{display:false},datalabels:{color:'#14366B',anchor:'end',align:'right',font:{family:'Manrope',weight:800,size:10.5},formatter:fmt}},
+      scales:{x:{grid:{color:'#E9EFF7'},ticks:{callback:fmt===moneyLabel?kTick:undefined,font:{family:'Manrope'}}},y:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700,size:10.5},color:'#14366B'}}}}});
   const t10=prods.slice(0,10);
-  const short=s=>s.length>26?s.slice(0,25)+'…':s;
-  mk('topChart',{type:'bar',data:{labels:t10.map(o=>short(o.p)),datasets:[
-    {label:'Uber Eats',data:t10.map(o=>o.uber),backgroundColor:C_UBER},
-    {label:'A precio cafetería',data:t10.map(o=>o.cafe),backgroundColor:C_CAFE}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{datalabels:dl({anchor:'end',align:'end'}),legend:{position:'bottom'}},scales:{x:{ticks:{callback:v=>fmtMoney(v)}}}}});
-  mk('difChart',{type:'bar',data:{labels:t10.map(o=>short(o.p)),datasets:[
-    {label:'Diferencia',data:t10.map(o=>o.uber-o.cafe),backgroundColor:C_DIF}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{datalabels:dl({anchor:'end',align:'end'}),legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtMoney(v)}}}}});
+  mk('topChart',hbar(t10.map(o=>short(o.p)),t10.map(o=>o.uber),0,moneyLabel));
 
+  // participación por categoría
+  const pieTip=ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ` ${ctx.label}: ${fmtMoney(ctx.parsed)} (${(ctx.parsed/t*100).toFixed(1)}%)`;};
+  const pctLabel=(v,ctx)=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);const p=v/t*100;return p>=4?p.toFixed(0)+'%':'';};
+  const pie=(type,labels,vals)=>({type,data:{labels,datasets:[{data:vals,backgroundColor:CHART_PALETTE,borderColor:'#FFFFFF',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700,size:10.5},boxWidth:11,padding:8}},tooltip:{callbacks:{label:pieTip}},datalabels:{color:'#fff',font:FONT,formatter:pctLabel}}}});
+  const byCat={}, unitsCat={}; rows.forEach(r=>{byCat[r.cat]=(byCat[r.cat]||0)+r.uber; unitsCat[r.cat]=(unitsCat[r.cat]||0)+r.q;});
+  mk('pieCatChart',pie('doughnut',Object.keys(byCat),Object.values(byCat)));
+
+  // unidades por producto / categoría
+  const u10=prods.slice().sort((a,b)=>b.q-a.q).slice(0,10);
+  mk('unitsProdChart',hbar(u10.map(o=>short(o.p)),u10.map(o=>o.q),3,v=>v+' pz'));
+  const ucL=Object.keys(unitsCat);
+  mk('unitsCatChart',{type:'bar',data:{labels:ucL,datasets:[{data:ucL.map(c=>unitsCat[c]),backgroundColor:ucL.map((_,i)=>CHART_PALETTE[i%CHART_PALETTE.length]),borderRadius:8,maxBarThickness:46}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false},datalabels:{color:'#14366B',anchor:'end',align:'top',font:FONT,formatter:v=>v+' pz'}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700,size:10.5},color:'#14366B',maxRotation:30,minRotation:0}},y:{grid:{color:'#E9EFF7'},ticks:{font:{family:'Manrope'}}}}}});
+
+  // ventas por día de la semana
+  const mw={}; DIAS.forEach(d=>mw[d]=0); rows.forEach(r=>{mw[r.dia]+=r.uber;});
+  mk('wkChart',{type:'bar',data:{labels:DIAS,datasets:[{data:DIAS.map(d=>mw[d]),backgroundColor:DIAS.map((_,i)=>CHART_PALETTE[i%CHART_PALETTE.length]),borderRadius:8,maxBarThickness:56}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false},datalabels:{color:'#14366B',anchor:'end',align:'top',font:FONT,formatter:moneyLabel}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700},color:'#14366B'}},y:{grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}}});
+
+  // detalle de foam por sabor
+  const foam={}; rows.forEach(r=>{if(r.foam) foam[r.foam]=(foam[r.foam]||0)+r.uber;});
+  const fk=Object.keys(foam);
+  mk('pieFoamChart',pie('pie',fk,fk.map(k=>foam[k])));
+  const foamBox=document.getElementById('pieFoamChart').parentElement; let fmsg=foamBox.querySelector('.no-foam');
+  if(!fk.length){ if(!fmsg){fmsg=document.createElement('p');fmsg.className='no-foam';fmsg.style.cssText='color:#95A5BC;font-weight:600;font-size:13px;text-align:center;padding-top:40px;';foamBox.appendChild(fmsg);} fmsg.textContent='Sin datos de Foam para este filtro.'; } else if(fmsg){fmsg.remove();}
 
   // ---- Rentabilidad ----
   const mg=Math.min(99,Math.max(0,parseFloat(fMargen.value)||0))/100;
@@ -553,10 +605,10 @@ function render(){
   window.__prodRows=prods; window.__dayRows=fd.map(f=>({f,...md[f]})); window.__nota=n;
 }
 
-[fMes,fDia,fFecha,fIva,fBase].forEach(e=>e.addEventListener('change',render));
+[fMes,fCategoria,fDia,fFecha,fIva,fBase].forEach(e=>e.addEventListener('change',render));
 fMargen.addEventListener('input',render);
 fProducto.addEventListener('input',render);
-document.getElementById('clearFilters').addEventListener('click',()=>{fMes.value='all';fDia.value='all';fFecha.value='all';fIva.value='total';fProducto.value='';fMargen.value=30;fBase.value='uber';render();});
+document.getElementById('clearFilters').addEventListener('click',()=>{fMes.value='all';fCategoria.value='all';fDia.value='all';fFecha.value='all';fIva.value='total';fProducto.value='';fMargen.value=30;fBase.value='uber';render();});
 document.getElementById('exportExcel').addEventListener('click',()=>{
   const wb=XLSX.utils.book_new();
   const r2=x=>Math.round(x*100)/100;
