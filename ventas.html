@@ -140,6 +140,7 @@
     padding:16px 20px;
     margin-bottom:24px;
     box-shadow:0 10px 26px -16px rgba(15,30,61,0.16);
+    position:sticky;top:10px;z-index:30;
   }
   .filter-field{display:flex;flex-direction:column;gap:6px;min-width:140px;flex:1;}
   .filter-field label{
@@ -326,7 +327,7 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
   <ul class="menu">
     <li><a href="inversion.html"><span class="dot"></span> Inversión</a></li>
     <li><a class="active" href="ventas.html"><span class="dot"></span> Ventas</a></li>
-    <li><span class="disabled"><span class="dot"></span> Ventas Uber Eats <span class="tag">Próx.</span></span></li>
+    <li><a href="ventas-ubereats.html"><span class="dot"></span> Ventas Uber Eats</a></li>
     <li><span class="disabled"><span class="dot"></span> Costos operativos <span class="tag">Próx.</span></span></li>
     <li><span class="disabled"><span class="dot"></span> Estado de resultados <span class="tag">Próx.</span></span></li>
   </ul>
@@ -750,23 +751,27 @@ function render(){
   const monthLabels = mesesPresentes.map(m=>{ const [y,mm]=m.split("-"); return MESES_NOMBRE[mm].slice(0,3)+" "+y.slice(2); });
   if(monthTrendChart) monthTrendChart.destroy();
   monthTrendChart = new Chart(monthTrendCtx, {
-    type:'bar',
     data:{
       labels: monthLabels,
       datasets:[
-        { label:'Efectivo', data: porMes.map(m=>m.efectivo), backgroundColor:'#E9A23B', borderRadius:8, maxBarThickness:60 },
-        { label:'Tarjeta', data: porMes.map(m=>m.tarjeta), backgroundColor:'#2A9D8F', borderRadius:8, maxBarThickness:60 }
+        { type:'bar', label:'Efectivo', data: porMes.map(m=>m.efectivo), backgroundColor:'#E9A23B', borderRadius:6, stack:'pago', maxBarThickness:70,
+          datalabels:{ display:true, color:'#14366B', anchor:'center', align:'center', font:{family:'Manrope', weight:800, size:11}, formatter:moneyLabel } },
+        { type:'bar', label:'Tarjeta', data: porMes.map(m=>m.tarjeta), backgroundColor:'#2A9D8F', borderRadius:6, stack:'pago', maxBarThickness:70,
+          datalabels:{ display:true, color:'#FFFFFF', anchor:'center', align:'center', font:{family:'Manrope', weight:800, size:11}, formatter:moneyLabel } },
+        { type:'line', label:'Total', data: porMes.map(m=>m.efectivo+m.tarjeta), borderColor:'#215AB3', backgroundColor:'#215AB3', showLine:false, pointRadius:0, pointHoverRadius:0,
+          datalabels:{ display:true, color:'#215AB3', anchor:'end', align:'top', font:{family:'Manrope', weight:800, size:12}, formatter:moneyLabel } }
       ]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ top:18 } },
       plugins:{
         legend:{ position:'bottom', labels:{ font:{family:'Manrope', weight:700}, boxWidth:12 } },
-        datalabels:{ color:'#14366B', anchor:'end', align:'top', font:{family:'Manrope', weight:800, size:11}, formatter:moneyLabel }
+        datalabels:{ display:false }
       },
       scales:{
-        x:{ grid:{display:false}, ticks:{ font:{family:'Manrope', weight:700}, color:'#14366B' } },
-        y:{ grid:{color:'#E9EFF7'}, ticks:{ callback:v=>'$'+(v/1000).toFixed(1)+'k', font:{family:'Manrope'} } }
+        x:{ stacked:true, grid:{display:false}, ticks:{ font:{family:'Manrope', weight:700}, color:'#14366B' } },
+        y:{ stacked:true, grid:{color:'#E9EFF7'}, ticks:{ callback:v=>'$'+(v/1000).toFixed(1)+'k', font:{family:'Manrope'} } }
       }
     }
   });
