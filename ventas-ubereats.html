@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MURH Hipódromo · Ventas Uber Eats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --blue-deep:#14366B;
+    --blue-main:#215AB3;
+    --blue-soft:#4D7BC2;
+    --blue-pale:#E9EFF7;
+    --blue-lightest:#C8D6EC;
+    --cream:#F4F7FB;
+    --ink:#14366B;
+    --grey:#95A5BC;
+    --white:#FFFFFF;
+    --sidebar-w:250px;
+    --amber:#E9A23B;
+    --teal:#2A9D8F;
+    --coral:#E76F51;
+    --purple:#8E44AD;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Manrope',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:var(--sidebar-w);
+    background:var(--blue-deep);
+    color:var(--white);
+    display:flex;
+    flex-direction:column;
+    padding:26px 18px;
+    position:fixed;
+    top:0;left:0;bottom:0;
+    overflow-y:auto;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:30px;
+    padding:0 6px;
+  }
+  .brand .badge{
+    width:38px;height:38px;
+    background:var(--blue-main);
+    border-radius:44% 56% 52% 48% / 50% 46% 54% 50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand .badge .murh-mark{width:22px;height:22px;display:block;}
+  .brand-text{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;line-height:1.1;}
+  .brand-text span{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:10.5px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+  .menu-label{
+    font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);
+    text-transform:uppercase;letter-spacing:1.2px;
+    margin:10px 8px 10px;
+  }
+  .menu{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px;}
+  .menu li a, .menu li .disabled{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 12px;
+    border-radius:14px;
+    color:rgba(255,255,255,0.8);
+    text-decoration:none;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .menu li a.active{
+    background:var(--blue-main);
+    color:var(--white);
+    box-shadow:0 6px 16px -6px rgba(33,90,179,0.7);
+  }
+  .menu li a:hover:not(.active){background:rgba(255,255,255,0.06); color:var(--white);}
+  .menu li .disabled{color:rgba(255,255,255,0.35); cursor:default;}
+  .menu li .tag{
+    margin-left:auto;
+    font-size:9.5px;font-weight:800;
+    background:rgba(255,255,255,0.08);
+    padding:3px 7px;border-radius:8px;
+    text-transform:uppercase;letter-spacing:0.4px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:0.55;}
+  .menu li a.active .dot{background:var(--white); opacity:1;}
+
+  .sidebar-foot{
+    margin-top:auto;
+    padding:14px 12px;
+    background:rgba(255,255,255,0.06);
+    border-radius:16px;
+    font-size:12.5px;
+  }
+  .sidebar-foot .who{font-weight:800;color:var(--white);}
+  .sidebar-foot a{color:rgba(255,255,255,0.75); text-decoration:none; font-weight:700; font-size:11.5px;}
+
+  /* ---------- MAIN ---------- */
+  main{
+    margin-left:var(--sidebar-w);
+    flex:1;
+    padding:32px 40px 60px;
+    max-width:1300px;
+  }
+  .topbar{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:22px;flex-wrap:wrap;gap:16px;
+  }
+  .topbar h1{
+    font-family:'Baloo 2',sans-serif;
+    font-size:30px;font-weight:800;color:var(--blue-deep);
+    margin:0 0 4px;
+  }
+  .topbar p{margin:0;color:var(--grey);font-weight:600;font-size:14px;}
+
+  /* barra de filtros (al inicio de la página) */
+  .filters-bar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:end;
+    gap:14px;
+    background:var(--white);
+    border-radius:22px;
+    padding:16px 20px;
+    margin-bottom:24px;
+    box-shadow:0 10px 26px -16px rgba(15,30,61,0.16);
+    position:sticky;top:10px;z-index:30;
+  }
+  .filter-field{display:flex;flex-direction:column;gap:6px;min-width:140px;flex:1;}
+  .filter-field label{
+    font-size:10.5px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.6px;
+  }
+  .filter-field select, .filter-field input{
+    padding:10px 13px;
+    border-radius:12px;
+    border:1.5px solid var(--blue-pale);
+    background:var(--cream);
+    font-family:'Manrope',sans-serif;
+    font-size:13px;font-weight:700;
+    color:var(--ink);
+    outline:none;
+  }
+  .filter-field select:focus, .filter-field input:focus{border-color:var(--blue-main);}
+  .filters-bar #clearFilters{flex:0 0 auto;height:41px;align-self:end;}
+  #clearFilters{
+    background:var(--blue-pale);color:var(--blue-main);border:none;
+    padding:9px 16px;border-radius:12px;font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:12.5px;cursor:pointer;
+  }
+  #clearFilters:hover{background:var(--blue-lightest);}
+  #exportExcel{
+    background:var(--teal);color:var(--white);border:none;
+    padding:9px 16px;border-radius:12px;font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:12.5px;cursor:pointer;flex:0 0 auto;height:41px;align-self:end;
+  }
+  #exportExcel:hover{background:#238577;}
+
+  /* KPI cards */
+  .kpi-section-label{
+    font-size:11.5px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.8px;
+    margin:0 0 10px 2px;
+  }
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:18px;
+    margin-bottom:14px;
+  }
+  .kpi-grid.secondary{margin-bottom:28px;}
+  .kpi{
+    background:var(--white);
+    border-radius:26px 30px 26px 30px / 30px 26px 30px 26px;
+    padding:18px 20px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 26px -14px rgba(15,30,61,0.18);
+  }
+  .kpi::after{
+    content:"";
+    position:absolute;
+    width:90px;height:90px;
+    border-radius:50%;
+    top:-30px;right:-30px;
+    opacity:0.10;
+    background:var(--blue-main);
+  }
+  .kpi:nth-child(2)::after{background:var(--amber);}
+  .kpi:nth-child(3)::after{background:var(--teal);}
+  .kpi:nth-child(4)::after{background:var(--purple);}
+  .kpi:nth-child(2) .val{color:#B9791F;}
+  .kpi:nth-child(3) .val{color:var(--teal);}
+  .kpi:nth-child(4) .val{color:var(--purple);}
+  .kpi .lbl{font-size:11px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;}
+  .kpi .val{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--blue-deep);}
+  .kpi .sub{font-size:11.5px;font-weight:600;color:var(--grey);margin-top:4px;}
+
+  /* charts row */
+  .charts-row{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:18px;
+    margin-bottom:18px;
+  }
+  .panel{
+    background:var(--white);
+    border-radius:26px;
+    padding:22px 24px;
+    box-shadow:0 10px 26px -14px rgba(15,30,61,0.14);
+  }
+  .panel h3{
+    font-family:'Baloo 2',sans-serif;
+    font-size:17px;font-weight:700;color:var(--blue-deep);
+    margin:0 0 14px;
+  }
+  .chart-box{position:relative; height:260px;}
+  .chart-box.tall{height:320px;}
+
+  /* table */
+  .table-panel{background:var(--white);border-radius:26px;padding:22px 24px;box-shadow:0 10px 26px -14px rgba(15,30,61,0.14);}
+  .table-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:10px;}
+  .table-scroll{overflow-x:auto; max-height:520px; overflow-y:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px;}
+  thead th{
+    position:sticky; top:0; z-index:1;
+    text-align:left;
+    font-size:11px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.5px;
+    padding:0 10px 10px;
+    border-bottom:2px solid var(--blue-pale);
+    background:var(--white);
+  }
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--blue-pale);font-weight:600;color:var(--ink);}
+  tbody tr:hover{background:var(--cream);}
+  tfoot .totals-row td{
+    padding:13px 10px;
+    font-weight:800;
+    color:var(--white);
+    background:var(--blue-deep);
+    border-bottom:none;
+    position:sticky; bottom:0;
+  }
+  tfoot .totals-row td:first-child{border-radius:0 0 0 14px; text-transform:uppercase; font-size:11.5px; letter-spacing:0.6px;}
+  tfoot .totals-row td:last-child{border-radius:0 0 14px 0;}
+  tfoot .totals-row td.num{color:var(--white);}
+  .cat-pill{
+    display:inline-block;padding:4px 10px;border-radius:9px;
+    font-size:11px;font-weight:800;background:var(--blue-pale);color:var(--blue-main);
+  }
+  .num{font-family:'Manrope',sans-serif;font-weight:800;color:var(--blue-deep);}
+  .no-rows{padding:26px 10px;text-align:center;color:var(--grey);font-weight:600;font-size:13px;}
+
+  @media (max-width:1050px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .charts-row{grid-template-columns:1fr;}
+  }
+  @media (max-width:760px){
+    .sidebar{position:relative;width:100%;height:auto;}
+    main{margin-left:0;padding:24px 18px 50px;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="badge">
+      <svg viewBox="0 0 447 447" xmlns="http://www.w3.org/2000/svg" class="murh-mark"><g transform="translate(0.000000,447.000000) scale(0.100000,-0.100000)" fill="#ffffff" stroke="none"><path d="M0 2235 l0 -2235 2235 0 2235 0 0 2235 0 2235 -2235 0 -2235 0 0
+-2235z m2077 1149 c120 -57 196 -221 164 -351 -7 -26 -34 -95 -61 -153 -64
+-139 -75 -216 -55 -370 16 -123 11 -169 -24 -218 -47 -67 -177 -58 -239 17
+-33 39 -62 118 -62 166 0 76 14 114 111 316 75 154 91 195 91 234 0 60 -22 85
+-73 85 -32 0 -40 -5 -57 -32 -11 -18 -22 -46 -26 -61 -4 -16 -18 -40 -32 -54
+-27 -27 -46 -27 -118 0 -69 26 -112 -4 -130 -89 -8 -35 8 -90 60 -206 57 -126
+56 -254 -1 -384 -90 -204 -303 -226 -356 -37 -14 50 -9 72 65 278 54 151 49
+239 -23 390 -44 92 -61 145 -61 196 0 97 71 216 147 245 102 39 221 -31 254
+-149 15 -55 37 -45 77 33 47 92 57 105 97 136 66 50 156 53 252 8z m480 -25
+c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
+-16 -60 35 -121 76 -90 9 6 25 52 36 106 27 126 57 186 128 249 121 109 135
+125 163 185 16 33 33 86 39 116 13 70 28 98 62 116 61 31 168 2 212 -59 30
+-41 33 -145 7 -219 -43 -123 -118 -203 -300 -321 -85 -55 -105 -94 -130 -255
+-22 -137 -47 -201 -95 -236 -75 -57 -186 -61 -259 -10 -53 38 -111 136 -134
+228 -23 94 -8 193 46 319 53 124 61 156 61 267 0 189 51 284 170 321 37 11 73
+10 107 -2z m505 -649 c27 -33 23 -48 -27 -94 -42 -38 -47 -47 -55 -109 -13
+-92 -32 -132 -70 -152 -62 -32 -121 4 -139 84 -17 77 18 200 72 249 59 55 182
+67 219 22z m118 -115 c44 -40 44 -163 1 -258 -31 -66 -84 -100 -166 -105 -58
+-4 -66 -2 -89 21 -31 31 -33 51 -7 75 10 9 31 28 45 41 14 13 28 33 30 45 27
+152 39 179 86 202 26 14 73 3 100 -21z m-1303 -359 c32 -20 63 -78 63 -115 0
+-35 -30 -90 -62 -114 -18 -13 -60 -34 -92 -47 -59 -24 -135 -75 -168 -114 -10
+-12 -23 -37 -29 -57 -10 -31 -7 -46 21 -125 86 -241 104 -351 75 -449 -48
+-167 -247 -206 -329 -65 -29 49 -27 180 3 324 37 172 26 234 -64 360 -42 57
+-45 99 -14 164 46 94 127 106 225 32 30 -23 61 -39 68 -37 8 3 16 25 20 49 15
+97 88 199 154 214 15 3 32 7 37 9 19 6 60 -7 92 -29z m965 14 c45 -13 85 -58
+94 -107 10 -54 -32 -128 -120 -210 -39 -36 -79 -77 -88 -92 -35 -52 -13 -139
+31 -127 60 17 138 27 169 21 79 -15 148 -74 178 -151 17 -46 17 -48 -7 -118
+-30 -87 -30 -162 0 -230 27 -62 21 -98 -23 -131 -106 -81 -260 -71 -316 20
+-52 85 -48 143 16 209 30 32 44 55 44 74 0 70 -83 136 -141 112 -31 -13 -75
+-71 -95 -127 -7 -21 -13 -79 -14 -130 0 -103 -11 -138 -51 -159 -35 -18 -120
+-18 -162 0 -44 18 -95 78 -103 122 -10 56 3 157 28 216 12 29 53 91 91 138 93
+116 132 198 162 345 27 129 40 163 93 238 33 46 68 71 122 88 35 10 50 10 92
+-1z m-528 -140 c151 -93 140 -244 -31 -432 -107 -118 -136 -191 -113 -293 34
+-157 20 -201 -82 -255 -80 -43 -153 -13 -201 80 -23 44 -27 64 -23 97 8 60 40
+150 102 288 61 135 65 169 34 260 -24 70 -25 113 -5 163 21 49 51 80 100 104
+54 25 169 19 219 -12z"/></g></svg>
+    </div>
+    <div class="brand-text">MURH<span>Hipódromo · Panel</span></div>
+  </div>
+
+  <div class="menu-label">Módulos financieros</div>
+  <ul class="menu">
+    <li><a href="inversion.html"><span class="dot"></span> Inversión</a></li>
+    <li><a href="ventas.html"><span class="dot"></span> Ventas</a></li>
+    <li><a class="active" href="ventas-ubereats.html"><span class="dot"></span> Ventas Uber Eats</a></li>
+    <li><span class="disabled"><span class="dot"></span> Costos operativos <span class="tag">Próx.</span></span></li>
+    <li><span class="disabled"><span class="dot"></span> Estado de resultados <span class="tag">Próx.</span></span></li>
+  </ul>
+
+  <div class="sidebar-foot">
+    <div class="who" id="whoami">Hola</div>
+    <a href="index.html?salir=1">Cerrar sesión</a>
+  </div>
+</aside>
+<main>
+  <div class="topbar">
+    <div>
+      <h1>Ventas Uber Eats</h1>
+      <p>Lo vendido en Uber Eats vs. lo que habría sido a precios de cafetería</p>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-field"><label for="fMes">Mes</label><select id="fMes"></select></div>
+    <div class="filter-field"><label for="fDia">Día de la semana</label><select id="fDia"></select></div>
+    <div class="filter-field"><label for="fFecha">Día (fecha)</label><select id="fFecha"></select></div>
+    <div class="filter-field"><label for="fIva">IVA</label>
+      <select id="fIva">
+        <option value="total">Total (con IVA)</option>
+        <option value="16">Sin IVA 16%</option>
+        <option value="8">Sin IVA 8%</option>
+      </select>
+    </div>
+    <div class="filter-field"><label for="fProducto">Producto</label><input type="text" id="fProducto" placeholder="Buscar…"></div>
+    <button id="clearFilters" type="button">Limpiar filtros</button>
+    <button id="exportExcel" type="button">⬇ Exportar a Excel</button>
+  </div>
+
+  <p class="kpi-section-label">Uber Eats vs. precios de cafetería (según filtros)</p>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="lbl">Venta Uber Eats</div><div class="val" id="kUber">—</div><div class="sub" id="kUberSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">A precios de cafetería</div><div class="val" id="kCafe">—</div><div class="sub" id="kCafeSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Diferencia (Uber − cafetería)</div><div class="val" id="kDif">—</div><div class="sub" id="kDifSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Sobreprecio Uber</div><div class="val" id="kPct">—</div><div class="sub" id="kPctSub">&nbsp;</div></div>
+  </div>
+  <div class="kpi-grid secondary">
+    <div class="kpi"><div class="lbl">Piezas vendidas</div><div class="val" id="kPzas">—</div><div class="sub" id="kPzasSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Venta promedio / día</div><div class="val" id="kDia">—</div><div class="sub" id="kDiaSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Precio prom. Uber / pieza</div><div class="val" id="kPUber">—</div><div class="sub" id="kPUberSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Producto más vendido</div><div class="val" id="kTop" style="font-size:16px;">—</div><div class="sub" id="kTopSub">&nbsp;</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="panel"><h3>Uber Eats vs. cafetería por día</h3><div class="chart-box tall"><canvas id="dayChart"></canvas></div></div>
+    <div class="panel"><h3>Ventas por día de la semana</h3><div class="chart-box tall"><canvas id="wkChart"></canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="panel"><h3>Top 10 productos · Uber vs. cafetería ($)</h3><div class="chart-box tall"><canvas id="topChart"></canvas></div></div>
+    <div class="panel"><h3>Diferencia por producto · top 10 ($)</h3><div class="chart-box tall"><canvas id="difChart"></canvas></div></div>
+  </div>
+
+  <div class="table-panel">
+    <div class="table-head-row"><h3>Detalle por producto</h3></div>
+    <div class="table-scroll">
+    <table>
+      <thead><tr>
+        <th>Producto</th><th>Piezas</th><th>Precio Uber prom.</th><th>Precio cafetería</th>
+        <th>Venta Uber</th><th>A precio cafetería</th><th>Diferencia</th><th>Sobreprecio</th>
+      </tr></thead>
+      <tbody id="tBody"></tbody>
+      <tfoot><tr class="totals-row">
+        <td>Totales</td><td class="num" id="tPzas">—</td><td></td><td></td>
+        <td class="num" id="tUber">—</td><td class="num" id="tCafe">—</td><td class="num" id="tDif">—</td><td class="num" id="tPct">—</td>
+      </tr></tfoot>
+    </table>
+    </div>
+  </div>
+  <p class="kpi-section-label">Rentabilidad (estimada · según todos los filtros)</p>
+  <div class="panel" style="margin-bottom:16px;">
+    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
+      <label for="fMargen" style="font-size:12px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:.6px;">Ganancia por producto (%)</label>
+      <input type="number" id="fMargen" value="30" min="0" max="99" step="1" style="width:90px;">
+      <label for="fBase" style="font-size:12px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:.6px;">Base</label>
+      <select id="fBase" style="width:auto;">
+        <option value="uber">Venta Uber Eats</option>
+        <option value="cafe">Precio cafetería</option>
+      </select>
+      <span style="font-size:12px;font-weight:600;color:var(--grey);">Igual para todos los productos: costo = venta × (1 − %). Para utilidad real usa el filtro IVA "Sin IVA".</span>
+    </div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="lbl">Venta</div><div class="val" id="rVenta">—</div><div class="sub" id="rVentaSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Costo estimado</div><div class="val" id="rCosto">—</div><div class="sub" id="rCostoSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Utilidad</div><div class="val" id="rUtil">—</div><div class="sub" id="rUtilSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Utilidad por pieza</div><div class="val" id="rPieza">—</div><div class="sub" id="rPiezaSub">&nbsp;</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="panel"><h3>Utilidad por producto · top 10 ($)</h3><div class="chart-box tall"><canvas id="rentChart"></canvas></div></div>
+    <div class="panel"><h3>Venta vs. costo vs. utilidad por día ($)</h3><div class="chart-box tall"><canvas id="rentDayChart"></canvas></div></div>
+  </div>
+  <div class="table-panel">
+    <div class="table-head-row"><h3>Rentabilidad por producto</h3></div>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Producto</th><th>Piezas</th><th>Venta</th><th>Costo estimado</th><th>Utilidad</th><th>Margen</th></tr></thead>
+      <tbody id="rBody"></tbody>
+      <tfoot><tr class="totals-row"><td>Totales</td><td class="num" id="rtPzas">—</td><td class="num" id="rtVenta">—</td><td class="num" id="rtCosto">—</td><td class="num" id="rtUtil">—</td><td class="num" id="rtMargen">—</td></tr></tfoot>
+    </table>
+    </div>
+  </div>
+  <p style="font-size:12px;font-weight:600;color:var(--grey);margin:14px 4px 30px;">
+    "A precios de cafetería" = piezas × precio de la hoja PRECIOS. La diferencia es lo que Uber Eats cobró de más al cliente; no descuenta comisión de Uber ni retenciones, que no vienen en este archivo.
+  </p>
+</main>
+
+<script>
+const VENTAS_UE = [{"f": "2026-09-04", "id": 15, "p": "LIMONADA MANGO MARACUYA", "q": 1, "m": 100, "c": 85}, {"f": "2026-09-04", "id": 33, "p": "Pan de Hojaldre", "q": 1, "m": 75, "c": 85}, {"f": "2026-09-04", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-05", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-07", "id": 23, "p": "CAFE AMERICANO", "q": 1, "m": 70, "c": 55}, {"f": "2026-09-07", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-07", "id": 11, "p": "LATTE CALIENTE", "q": 1, "m": 100, "c": 80}, {"f": "2026-09-07", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 1, "m": 160, "c": 110}, {"f": "2026-09-07", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-07", "id": 1, "p": "LATTE DE LOTTUS", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-07", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-08", "id": 18, "p": "GALLETA CHOCOLATE OSCURO", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-08", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-08", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-08", "id": 1, "p": "LATTE DE LOTTUS", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-08", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-08", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-08", "id": 27, "p": "MOOW Mango-Coco", "q": 1, "m": 60, "c": 60}, {"f": "2026-09-08", "id": 20, "p": "PAN HOJALDRE CON QUESO DANES", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-08", "id": 14, "p": "TÓNICO DE BERRIES", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-08", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 3, "m": 330, "c": 85}, {"f": "2026-09-09", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-09", "id": 18, "p": "GALLETA CHOCOLATE OSCURO", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-09", "id": 11, "p": "LATTE CALIENTE", "q": 1, "m": 105, "c": 80}, {"f": "2026-09-09", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-09", "id": 1, "p": "LATTE DE LOTTUS", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-09", "id": 5, "p": "LATTE FRIO", "q": 2, "m": 245, "c": 85}, {"f": "2026-09-09", "id": 15, "p": "LIMONADA MANGO MARACUYA", "q": 1, "m": 100, "c": 85}, {"f": "2026-09-09", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-09", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-09", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-10", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-10", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-10", "id": 4, "p": "CROISSANT NATURAL", "q": 6, "m": 330, "c": 50}, {"f": "2026-09-10", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-10", "id": 18, "p": "GALLETA CHOCOLATE OSCURO", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-10", "id": 1, "p": "LATTE DE LOTTUS", "q": 5, "m": 745, "c": 110}, {"f": "2026-09-10", "id": 5, "p": "LATTE FRIO", "q": 3, "m": 345, "c": 85}, {"f": "2026-09-10", "id": 15, "p": "LIMONADA MANGO MARACUYA", "q": 1, "m": 100, "c": 85}, {"f": "2026-09-10", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 160, "c": 115}, {"f": "2026-09-10", "id": 29, "p": "MOOW Mora Azul-Lavanda", "q": 1, "m": 60, "c": 60}, {"f": "2026-09-10", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-11", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 2, "m": 305, "c": 110}, {"f": "2026-09-11", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-11", "id": 4, "p": "CROISSANT NATURAL", "q": 10, "m": 550, "c": 50}, {"f": "2026-09-11", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-11", "id": 25, "p": "Cappuccino (12 oz)", "q": 1, "m": 95, "c": 80}, {"f": "2026-09-11", "id": 22, "p": "DIRTY CHAI", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-11", "id": 21, "p": "GALLETA S'MORE", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-11", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 2, "m": 295, "c": 110}, {"f": "2026-09-11", "id": 1, "p": "LATTE DE LOTTUS", "q": 2, "m": 300, "c": 110}, {"f": "2026-09-11", "id": 5, "p": "LATTE FRIO", "q": 1, "m": 115, "c": 85}, {"f": "2026-09-11", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 160, "c": 115}, {"f": "2026-09-11", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-11", "id": 20, "p": "PAN HOJALDRE CON QUESO DANES", "q": 2, "m": 180, "c": 85}, {"f": "2026-09-11", "id": 32, "p": "TISANA FRIA DE FRUTOS ROJOS", "q": 1, "m": 100, "c": 80}, {"f": "2026-09-11", "id": 26, "p": "TISANA FRIA DE MANZANILLA CON MENTA", "q": 1, "m": 100, "c": 80}, {"f": "2026-09-11", "id": 14, "p": "TÓNICO DE BERRIES", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-11", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 3, "m": 330, "c": 85}, {"f": "2026-09-12", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-12", "id": 4, "p": "CROISSANT NATURAL", "q": 2, "m": 110, "c": 50}, {"f": "2026-09-12", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-12", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-12", "id": 1, "p": "LATTE DE LOTTUS", "q": 2, "m": 300, "c": 110}, {"f": "2026-09-12", "id": 5, "p": "LATTE FRIO", "q": 2, "m": 225, "c": 85}, {"f": "2026-09-12", "id": 27, "p": "MOOW Mango-Coco", "q": 1, "m": 60, "c": 60}, {"f": "2026-09-12", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-13", "id": 4, "p": "CROISSANT NATURAL", "q": 1, "m": 55, "c": 50}, {"f": "2026-09-13", "id": 1, "p": "LATTE DE LOTTUS", "q": 2, "m": 290, "c": 110}, {"f": "2026-09-13", "id": 20, "p": "PAN HOJALDRE CON QUESO DANES", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-13", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-14", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-14", "id": 4, "p": "CROISSANT NATURAL", "q": 1, "m": 55, "c": 50}, {"f": "2026-09-14", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-14", "id": 22, "p": "DIRTY CHAI", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-14", "id": 5, "p": "LATTE FRIO", "q": 2, "m": 225, "c": 85}, {"f": "2026-09-14", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 2, "m": 290, "c": 115}, {"f": "2026-09-15", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 5, "m": 725, "c": 110}, {"f": "2026-09-15", "id": 24, "p": "CHAI CON COLD FOAM DE COCO", "q": 1, "m": 160, "c": 110}, {"f": "2026-09-15", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-15", "id": 4, "p": "CROISSANT NATURAL", "q": 6, "m": 330, "c": 50}, {"f": "2026-09-15", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-15", "id": 22, "p": "DIRTY CHAI", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-15", "id": 18, "p": "GALLETA CHOCOLATE OSCURO", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-15", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-15", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 4, "m": 595, "c": 110}, {"f": "2026-09-15", "id": 1, "p": "LATTE DE LOTTUS", "q": 3, "m": 450, "c": 110}, {"f": "2026-09-15", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 2, "m": 290, "c": 115}, {"f": "2026-09-15", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-15", "id": 29, "p": "MOOW Mora Azul-Lavanda", "q": 1, "m": 60, "c": 60}, {"f": "2026-09-15", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-16", "id": 23, "p": "CAFE AMERICANO", "q": 1, "m": 70, "c": 55}, {"f": "2026-09-16", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 2, "m": 290, "c": 110}, {"f": "2026-09-16", "id": 4, "p": "CROISSANT NATURAL", "q": 5, "m": 275, "c": 50}, {"f": "2026-09-16", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-16", "id": 34, "p": "Cortado (4 oz)", "q": 1, "m": 65, "c": 50}, {"f": "2026-09-16", "id": 22, "p": "DIRTY CHAI", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-16", "id": 11, "p": "LATTE CALIENTE", "q": 1, "m": 120, "c": 80}, {"f": "2026-09-16", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 3, "m": 445, "c": 110}, {"f": "2026-09-16", "id": 1, "p": "LATTE DE LOTTUS", "q": 2, "m": 295, "c": 110}, {"f": "2026-09-16", "id": 5, "p": "LATTE FRIO", "q": 2, "m": 225, "c": 85}, {"f": "2026-09-16", "id": 15, "p": "LIMONADA MANGO MARACUYA", "q": 1, "m": 100, "c": 85}, {"f": "2026-09-16", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-16", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 2, "m": 305, "c": 115}, {"f": "2026-09-16", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-16", "id": 20, "p": "PAN HOJALDRE CON QUESO DANES", "q": 2, "m": 180, "c": 85}, {"f": "2026-09-16", "id": 19, "p": "PAN HOJALDRE FRUTOS ROJOS", "q": 2, "m": 180, "c": 85}, {"f": "2026-09-16", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-17", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-17", "id": 4, "p": "CROISSANT NATURAL", "q": 6, "m": 330, "c": 50}, {"f": "2026-09-17", "id": 25, "p": "Cappuccino (12 oz)", "q": 1, "m": 95, "c": 80}, {"f": "2026-09-17", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 2, "m": 170, "c": 80}, {"f": "2026-09-17", "id": 11, "p": "LATTE CALIENTE", "q": 2, "m": 205, "c": 80}, {"f": "2026-09-17", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 1, "m": 160, "c": 110}, {"f": "2026-09-17", "id": 1, "p": "LATTE DE LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-17", "id": 5, "p": "LATTE FRIO", "q": 5, "m": 575, "c": 85}, {"f": "2026-09-17", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-17", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 3, "m": 465, "c": 115}, {"f": "2026-09-17", "id": 28, "p": "MOOW Yuzu-Frambuesa", "q": 1, "m": 60, "c": 60}, {"f": "2026-09-18", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 160, "c": 110}, {"f": "2026-09-18", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-18", "id": 4, "p": "CROISSANT NATURAL", "q": 1, "m": 55, "c": 50}, {"f": "2026-09-18", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-18", "id": 25, "p": "Cappuccino (12 oz)", "q": 1, "m": 95, "c": 80}, {"f": "2026-09-18", "id": 30, "p": "Flat White (6 oz)", "q": 1, "m": 80, "c": 55}, {"f": "2026-09-18", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-18", "id": 21, "p": "GALLETA S'MORE", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-18", "id": 11, "p": "LATTE CALIENTE", "q": 2, "m": 200, "c": 80}, {"f": "2026-09-18", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-18", "id": 1, "p": "LATTE DE LOTTUS", "q": 3, "m": 440, "c": 110}, {"f": "2026-09-18", "id": 5, "p": "LATTE FRIO", "q": 2, "m": 230, "c": 85}, {"f": "2026-09-18", "id": 15, "p": "LIMONADA MANGO MARACUYA", "q": 2, "m": 200, "c": 85}, {"f": "2026-09-18", "id": 28, "p": "MOOW Yuzu-Frambuesa", "q": 1, "m": 60, "c": 60}, {"f": "2026-09-18", "id": 14, "p": "TÓNICO DE BERRIES", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-18", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-19", "id": 23, "p": "CAFE AMERICANO", "q": 1, "m": 70, "c": 55}, {"f": "2026-09-19", "id": 17, "p": "CHAI CON FOAM DE PLÁTANO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-19", "id": 4, "p": "CROISSANT NATURAL", "q": 1, "m": 55, "c": 50}, {"f": "2026-09-19", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-19", "id": 19, "p": "PAN HOJALDRE FRUTOS ROJOS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-20", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 160, "c": 110}, {"f": "2026-09-20", "id": 4, "p": "CROISSANT NATURAL", "q": 3, "m": 165, "c": 50}, {"f": "2026-09-20", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-20", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-20", "id": 1, "p": "LATTE DE LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-20", "id": 5, "p": "LATTE FRIO", "q": 1, "m": 115, "c": 85}, {"f": "2026-09-20", "id": 31, "p": "LIMONADA DE BERRIES", "q": 1, "m": 100, "c": 80}, {"f": "2026-09-20", "id": 15, "p": "LIMONADA MANGO MARACUYA", "q": 1, "m": 100, "c": 85}, {"f": "2026-09-20", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 2, "m": 305, "c": 115}, {"f": "2026-09-20", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-20", "id": 19, "p": "PAN HOJALDRE FRUTOS ROJOS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-20", "id": 14, "p": "TÓNICO DE BERRIES", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-20", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-21", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 2, "m": 290, "c": 110}, {"f": "2026-09-21", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-21", "id": 4, "p": "CROISSANT NATURAL", "q": 4, "m": 220, "c": 50}, {"f": "2026-09-21", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-21", "id": 21, "p": "GALLETA S'MORE", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-21", "id": 11, "p": "LATTE CALIENTE", "q": 3, "m": 310, "c": 80}, {"f": "2026-09-21", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-21", "id": 1, "p": "LATTE DE LOTTUS", "q": 1, "m": 150, "c": 110}, {"f": "2026-09-21", "id": 5, "p": "LATTE FRIO", "q": 1, "m": 115, "c": 85}, {"f": "2026-09-21", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-21", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 1, "m": 160, "c": 115}, {"f": "2026-09-21", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 2, "m": 290, "c": 115}, {"f": "2026-09-21", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-22", "id": 23, "p": "CAFE AMERICANO", "q": 1, "m": 70, "c": 55}, {"f": "2026-09-22", "id": 17, "p": "CHAI CON FOAM DE PLÁTANO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-22", "id": 4, "p": "CROISSANT NATURAL", "q": 4, "m": 220, "c": 50}, {"f": "2026-09-22", "id": 18, "p": "GALLETA CHOCOLATE OSCURO", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-22", "id": 8, "p": "LATTE COLD FOAM COCO", "q": 2, "m": 295, "c": 110}, {"f": "2026-09-22", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 2, "m": 295, "c": 110}, {"f": "2026-09-22", "id": 1, "p": "LATTE DE LOTTUS", "q": 4, "m": 595, "c": 110}, {"f": "2026-09-22", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 2, "m": 290, "c": 115}, {"f": "2026-09-22", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-22", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-23", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 2, "m": 290, "c": 110}, {"f": "2026-09-23", "id": 17, "p": "CHAI CON FOAM DE PLÁTANO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-23", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-23", "id": 4, "p": "CROISSANT NATURAL", "q": 6, "m": 330, "c": 50}, {"f": "2026-09-23", "id": 18, "p": "GALLETA CHOCOLATE OSCURO", "q": 2, "m": 170, "c": 80}, {"f": "2026-09-23", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 4, "m": 590, "c": 110}, {"f": "2026-09-23", "id": 1, "p": "LATTE DE LOTTUS", "q": 2, "m": 300, "c": 110}, {"f": "2026-09-23", "id": 5, "p": "LATTE FRIO", "q": 1, "m": 115, "c": 85}, {"f": "2026-09-23", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-23", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 4, "m": 440, "c": 85}, {"f": "2026-09-24", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 2, "m": 290, "c": 110}, {"f": "2026-09-24", "id": 17, "p": "CHAI CON FOAM DE PLÁTANO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-24", "id": 4, "p": "CROISSANT NATURAL", "q": 2, "m": 110, "c": 50}, {"f": "2026-09-24", "id": 22, "p": "DIRTY CHAI", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-24", "id": 11, "p": "LATTE CALIENTE", "q": 1, "m": 100, "c": 80}, {"f": "2026-09-24", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-24", "id": 14, "p": "TÓNICO DE BERRIES", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-24", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 3, "m": 330, "c": 85}, {"f": "2026-09-25", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-25", "id": 4, "p": "CROISSANT NATURAL", "q": 4, "m": 220, "c": 50}, {"f": "2026-09-25", "id": 16, "p": "CROISSANT RELLENO DE CREMA DE ALMENDRAS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-25", "id": 18, "p": "GALLETA CHOCOLATE OSCURO", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-25", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-25", "id": 11, "p": "LATTE CALIENTE", "q": 1, "m": 105, "c": 80}, {"f": "2026-09-25", "id": 1, "p": "LATTE DE LOTTUS", "q": 6, "m": 945, "c": 110}, {"f": "2026-09-25", "id": 5, "p": "LATTE FRIO", "q": 2, "m": 225, "c": 85}, {"f": "2026-09-25", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-25", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-26", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-26", "id": 24, "p": "CHAI CON COLD FOAM DE COCO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-26", "id": 17, "p": "CHAI CON FOAM DE PLÁTANO", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-26", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-26", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-26", "id": 11, "p": "LATTE CALIENTE", "q": 1, "m": 105, "c": 80}, {"f": "2026-09-26", "id": 7, "p": "LATTE COLD FOAM DE PLATANO", "q": 3, "m": 435, "c": 110}, {"f": "2026-09-26", "id": 1, "p": "LATTE DE LOTTUS", "q": 2, "m": 290, "c": 110}, {"f": "2026-09-26", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-26", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-26", "id": 19, "p": "PAN HOJALDRE FRUTOS ROJOS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-26", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-27", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-27", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-27", "id": 1, "p": "LATTE DE LOTTUS", "q": 3, "m": 460, "c": 110}, {"f": "2026-09-27", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 160, "c": 115}, {"f": "2026-09-27", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-28", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-28", "id": 13, "p": "CROISSANT CUBIERTA DE PISTACHE", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-28", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-28", "id": 9, "p": "MATCHA LATTE CON COLD FOAM DE PLATANO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-28", "id": 26, "p": "TISANA FRIA DE MANZANILLA CON MENTA", "q": 1, "m": 100, "c": 80}, {"f": "2026-09-28", "id": 14, "p": "TÓNICO DE BERRIES", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-28", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 2, "m": 220, "c": 85}, {"f": "2026-09-29", "id": 23, "p": "CAFE AMERICANO", "q": 1, "m": 70, "c": 55}, {"f": "2026-09-29", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 2, "m": 290, "c": 110}, {"f": "2026-09-29", "id": 4, "p": "CROISSANT NATURAL", "q": 2, "m": 110, "c": 50}, {"f": "2026-09-29", "id": 21, "p": "GALLETA S'MORE", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-29", "id": 1, "p": "LATTE DE LOTTUS", "q": 6, "m": 910, "c": 110}, {"f": "2026-09-29", "id": 5, "p": "LATTE FRIO", "q": 1, "m": 115, "c": 85}, {"f": "2026-09-29", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-29", "id": 19, "p": "PAN HOJALDRE FRUTOS ROJOS", "q": 1, "m": 90, "c": 85}, {"f": "2026-09-29", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-30", "id": 2, "p": "CHAI CON COLD FOAM DE BISCOFF LOTTUS", "q": 1, "m": 145, "c": 110}, {"f": "2026-09-30", "id": 12, "p": "GALLETA LOTTUS CON MACADAMIA", "q": 1, "m": 85, "c": 80}, {"f": "2026-09-30", "id": 21, "p": "GALLETA S'MORE", "q": 2, "m": 170, "c": 80}, {"f": "2026-09-30", "id": 11, "p": "LATTE CALIENTE", "q": 1, "m": 105, "c": 80}, {"f": "2026-09-30", "id": 1, "p": "LATTE DE LOTTUS", "q": 5, "m": 745, "c": 110}, {"f": "2026-09-30", "id": 5, "p": "LATTE FRIO", "q": 1, "m": 110, "c": 85}, {"f": "2026-09-30", "id": 6, "p": "MATCHA LATTE CON COLD FOAM DE BISCOFF LOTUS", "q": 1, "m": 160, "c": 115}, {"f": "2026-09-30", "id": 10, "p": "MATCHA LATTE CON COLD FOAM DE COCO", "q": 1, "m": 145, "c": 115}, {"f": "2026-09-30", "id": 3, "p": "TÓNICO MANGO MARACUYA", "q": 1, "m": 110, "c": 85}];
+
+const params = new URLSearchParams(window.location.search);
+const usuario = params.get('user') || 'Usuario';
+document.getElementById('whoami').textContent = "Hola, " + usuario;
+
+function fmtMoney(n){ return "$" + Math.round(n).toLocaleString("es-MX"); }
+function fmtFecha(iso){ return new Date(iso+"T00:00:00").toLocaleDateString("es-MX",{day:"2-digit",month:"short"}); }
+const DIAS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const diaDe = iso => DIAS[(new Date(iso+"T00:00:00").getDay()+6)%7];
+VENTAS_UE.forEach(r => r.dia = diaDe(r.f));
+
+const fMargen=document.getElementById('fMargen'), fBase=document.getElementById('fBase');
+const fMes=document.getElementById('fMes');
+const MESES={'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+const fDia=document.getElementById('fDia'), fFecha=document.getElementById('fFecha'), fIva=document.getElementById('fIva'), fProducto=document.getElementById('fProducto');
+const fechas=[...new Set(VENTAS_UE.map(r=>r.f))].sort();
+fMes.innerHTML='<option value="all">Todos</option>'+[...new Set(VENTAS_UE.map(r=>r.f.slice(0,7)))].sort().map(m=>`<option value="${m}">${MESES[m.slice(5)]} ${m.slice(0,4)}</option>`).join('');
+fDia.innerHTML='<option value="all">Todos</option>'+DIAS.map(d=>`<option value="${d}">${d}</option>`).join('');
+fFecha.innerHTML='<option value="all">Todos</option>'+fechas.map(f=>`<option value="${f}">${fmtFecha(f)} · ${diaDe(f).slice(0,3)}</option>`).join('');
+
+const C_UBER='#215AB3', C_CAFE='#E9A23B', C_DIF='#2A9D8F';
+if (typeof ChartDataLabels !== 'undefined') { Chart.register(ChartDataLabels); }
+const charts={};
+function mk(id,cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart(document.getElementById(id),cfg); }
+const dl = (extra)=>Object.assign({color:'#14366B',font:{weight:'700',size:10},formatter:v=>fmtMoney(v)},extra||{});
+const nota = () => fIva.value==='16'?'sin IVA 16%':(fIva.value==='8'?'sin IVA 8%':'con IVA (total)');
+
+function render(){
+  const div = fIva.value==='16'?1.16:(fIva.value==='8'?1.08:1);
+  const q = fProducto.value.trim().toLowerCase();
+  const rows = VENTAS_UE.filter(r =>
+    (fMes.value==='all'||r.f.slice(0,7)===fMes.value) &&
+    (fDia.value==='all'||r.dia===fDia.value) &&
+    (fFecha.value==='all'||r.f===fFecha.value) &&
+    (!q || r.p.toLowerCase().includes(q))
+  ).map(r => ({...r, uber:r.m/div, cafe:r.q*r.c/div}));
+
+  const sum=(a,k)=>a.reduce((s,r)=>s+r[k],0);
+  const uber=sum(rows,'uber'), cafe=sum(rows,'cafe'), pzas=sum(rows,'q'), dif=uber-cafe;
+  const dias=new Set(rows.map(r=>r.f)).size;
+  const n=nota();
+  const set=(id,v,sub)=>{document.getElementById(id).textContent=v; if(sub!==undefined) document.getElementById(id+'Sub').textContent=sub;};
+  set('kUber',fmtMoney(uber),n);
+  set('kCafe',fmtMoney(cafe),'mismas piezas, precio cafetería · '+n);
+  set('kDif',fmtMoney(dif),'lo que Uber cobró de más · '+n);
+  set('kPct',cafe? (dif/cafe*100).toFixed(1)+'%':'—','sobre precio cafetería');
+  set('kPzas',pzas.toLocaleString('es-MX'),dias+' días con venta');
+  set('kDia',dias?fmtMoney(uber/dias):'—','Uber Eats · '+n);
+  set('kPUber',pzas?fmtMoney(uber/pzas):'—','cafetería: '+(pzas?fmtMoney(cafe/pzas):'—'));
+
+  // por producto
+  const mp={};
+  rows.forEach(r=>{ const o=mp[r.p]||(mp[r.p]={p:r.p,q:0,uber:0,cafe:0,pc:r.c/div}); o.q+=r.q;o.uber+=r.uber;o.cafe+=r.cafe; });
+  const prods=Object.values(mp).sort((a,b)=>b.uber-a.uber);
+  set('kTop', prods.length?prods.slice().sort((a,b)=>b.q-a.q)[0].p:'—', prods.length?prods.slice().sort((a,b)=>b.q-a.q)[0].q+' piezas':'');
+  document.getElementById('tBody').innerHTML = prods.map(o=>{
+    const d=o.uber-o.cafe;
+    return `<tr><td>${o.p}</td><td class="num">${o.q}</td><td class="num">${fmtMoney(o.uber/o.q)}</td><td class="num">${fmtMoney(o.pc)}</td><td class="num">${fmtMoney(o.uber)}</td><td class="num">${fmtMoney(o.cafe)}</td><td class="num" style="color:${d<0?'#D62839':'inherit'}">${fmtMoney(d)}</td><td class="num">${o.cafe?(d/o.cafe*100).toFixed(1)+'%':'—'}</td></tr>`;
+  }).join('');
+  set('tPzas',pzas.toLocaleString('es-MX')); set('tUber',fmtMoney(uber)); set('tCafe',fmtMoney(cafe)); set('tDif',fmtMoney(dif)); set('tPct',cafe?(dif/cafe*100).toFixed(1)+'%':'—');
+
+  // por día
+  const md={}; rows.forEach(r=>{const o=md[r.f]||(md[r.f]={uber:0,cafe:0}); o.uber+=r.uber;o.cafe+=r.cafe;});
+  const fd=Object.keys(md).sort();
+  mk('dayChart',{type:'bar',data:{labels:fd.map(fmtFecha),datasets:[
+    {label:'Uber Eats',data:fd.map(f=>md[f].uber),backgroundColor:C_UBER},
+    {label:'A precio cafetería',data:fd.map(f=>md[f].cafe),backgroundColor:C_CAFE}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:{display:false},legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}});
+
+  // por día de semana
+  const mw={}; rows.forEach(r=>{const o=mw[r.dia]||(mw[r.dia]={uber:0,cafe:0}); o.uber+=r.uber;o.cafe+=r.cafe;});
+  const wd=DIAS.filter(d=>mw[d]);
+  mk('wkChart',{type:'bar',data:{labels:wd,datasets:[
+    {label:'Uber Eats',data:wd.map(d=>mw[d].uber),backgroundColor:C_UBER},
+    {label:'A precio cafetería',data:wd.map(d=>mw[d].cafe),backgroundColor:C_CAFE}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:dl({anchor:'end',align:'end'}),legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}});
+
+  // top 10
+  const t10=prods.slice(0,10);
+  const short=s=>s.length>26?s.slice(0,25)+'…':s;
+  mk('topChart',{type:'bar',data:{labels:t10.map(o=>short(o.p)),datasets:[
+    {label:'Uber Eats',data:t10.map(o=>o.uber),backgroundColor:C_UBER},
+    {label:'A precio cafetería',data:t10.map(o=>o.cafe),backgroundColor:C_CAFE}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{datalabels:dl({anchor:'end',align:'end'}),legend:{position:'bottom'}},scales:{x:{ticks:{callback:v=>fmtMoney(v)}}}}});
+  mk('difChart',{type:'bar',data:{labels:t10.map(o=>short(o.p)),datasets:[
+    {label:'Diferencia',data:t10.map(o=>o.uber-o.cafe),backgroundColor:C_DIF}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{datalabels:dl({anchor:'end',align:'end'}),legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtMoney(v)}}}}});
+
+
+  // ---- Rentabilidad ----
+  const mg=Math.min(99,Math.max(0,parseFloat(fMargen.value)||0))/100;
+  const base=fBase.value==='cafe'?'cafe':'uber';
+  const rp=prods.map(o=>{const v=o[base];return {p:o.p,q:o.q,venta:v,util:v*mg,costo:v*(1-mg)};});
+  rp.sort((a,b)=>b.util-a.util);
+  const rV=sum(rp,'venta'), rU=sum(rp,'util'), rC=sum(rp,'costo');
+  const bn=base==='cafe'?'a precio cafetería':'Uber Eats';
+  set('rVenta',fmtMoney(rV),bn+' · '+n);
+  set('rCosto',fmtMoney(rC),(100-mg*100).toFixed(0)+'% de la venta');
+  set('rUtil',fmtMoney(rU),(mg*100).toFixed(0)+'% de margen');
+  set('rPieza',pzas?fmtMoney(rU/pzas):'—','sobre '+pzas+' piezas');
+  document.getElementById('rBody').innerHTML=rp.map(o=>`<tr><td>${o.p}</td><td class="num">${o.q}</td><td class="num">${fmtMoney(o.venta)}</td><td class="num">${fmtMoney(o.costo)}</td><td class="num">${fmtMoney(o.util)}</td><td class="num">${(mg*100).toFixed(0)}%</td></tr>`).join('');
+  set('rtPzas',pzas.toLocaleString('es-MX'));set('rtVenta',fmtMoney(rV));set('rtCosto',fmtMoney(rC));set('rtUtil',fmtMoney(rU));set('rtMargen',(mg*100).toFixed(0)+'%');
+  const r10=rp.slice(0,10);
+  mk('rentChart',{type:'bar',data:{labels:r10.map(o=>short(o.p)),datasets:[{label:'Utilidad',data:r10.map(o=>o.util),backgroundColor:C_DIF}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{datalabels:dl({anchor:'end',align:'end'}),legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtMoney(v)}}}}});
+  mk('rentDayChart',{type:'bar',data:{labels:fd.map(fmtFecha),datasets:[
+    {label:'Venta',data:fd.map(f=>md[f][base]),backgroundColor:C_UBER},
+    {label:'Costo',data:fd.map(f=>md[f][base]*(1-mg)),backgroundColor:C_CAFE},
+    {label:'Utilidad',data:fd.map(f=>md[f][base]*mg),backgroundColor:C_DIF}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:{display:false},legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>fmtMoney(v)}}}}});
+  window.__rentRows=rp; window.__mg=mg; window.__base=bn;
+  window.__prodRows=prods; window.__dayRows=fd.map(f=>({f,...md[f]})); window.__nota=n;
+}
+
+[fMes,fDia,fFecha,fIva,fBase].forEach(e=>e.addEventListener('change',render));
+fMargen.addEventListener('input',render);
+fProducto.addEventListener('input',render);
+document.getElementById('clearFilters').addEventListener('click',()=>{fMes.value='all';fDia.value='all';fFecha.value='all';fIva.value='total';fProducto.value='';fMargen.value=30;fBase.value='uber';render();});
+document.getElementById('exportExcel').addEventListener('click',()=>{
+  const wb=XLSX.utils.book_new();
+  const r2=x=>Math.round(x*100)/100;
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(window.__prodRows.map(o=>({Producto:o.p,Piezas:o.q,'Venta Uber':r2(o.uber),'A precio cafetería':r2(o.cafe),Diferencia:r2(o.uber-o.cafe),'Sobreprecio %':o.cafe?r2((o.uber-o.cafe)/o.cafe*100):null,IVA:window.__nota}))),'Por producto');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(window.__dayRows.map(o=>({Fecha:o.f,'Venta Uber':r2(o.uber),'A precio cafetería':r2(o.cafe),Diferencia:r2(o.uber-o.cafe),IVA:window.__nota}))),'Por día');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(window.__rentRows.map(o=>({Producto:o.p,Piezas:o.q,Venta:r2(o.venta),'Costo estimado':r2(o.costo),Utilidad:r2(o.util),'Margen %':r2(window.__mg*100),Base:window.__base,IVA:window.__nota}))),'Rentabilidad');
+  XLSX.writeFile(wb,'Ventas_UberEats_MURH.xlsx');
+});
+render();
+</script>
+</body>
+</html>
