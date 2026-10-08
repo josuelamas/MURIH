@@ -152,6 +152,19 @@
     color:rgba(20,54,107,0.45);
     font-weight:600;
   }
+
+  .card.wide{width:min(560px, 92vw);}
+  #modulos{display:none;}
+  .welcome{text-align:center;color:var(--blue-deep);font-weight:700;font-size:15px;margin:0 0 18px;}
+  .mods{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .mod{display:block;text-decoration:none;background:var(--white);border:2px solid var(--blue-lightest);border-radius:20px;padding:16px 14px;color:var(--blue-deep);font-weight:800;font-family:'Baloo 2',sans-serif;font-size:16px;transition:transform .12s ease,border-color .15s ease,box-shadow .15s ease;}
+  .mod small{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:12px;color:var(--grey);margin-top:2px;}
+  a.mod:hover{border-color:var(--blue-main);transform:translateY(-2px);box-shadow:0 10px 20px -10px rgba(33,90,179,.5);}
+  .mod.off{opacity:.55;cursor:default;background:transparent;border-style:dashed;}
+  .mod .tag{float:right;font-family:'Manrope',sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--blue-main);background:var(--blue-lightest);border-radius:10px;padding:2px 8px;}
+  .logout{background:transparent;color:var(--blue-main);border:2px solid var(--blue-lightest);margin-top:18px;}
+  .logout:hover{background:var(--blue-lightest);}
+  @media(max-width:480px){.mods{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -202,7 +215,7 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
     <h1>MURH Hipódromo</h1>
     <p class="sub">Panel interno · Acceso</p>
 
-    <form id="loginForm">
+    <div id="loginView"><form id="loginForm">
       <div class="field">
         <label for="user">Usuario</label>
         <select id="user" required>
@@ -217,7 +230,12 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
       </div>
       <button type="submit">Entrar al panel</button>
       <div class="error" id="err"></div>
-    </form>
+    </form></div>
+    <div id="modulos">
+      <p class="welcome" id="welcome"></p>
+      <div class="mods" id="modsGrid"></div>
+      <button type="button" class="logout" id="logout">Cerrar sesión</button>
+    </div>
     <p class="foot">MURH Hipódromo © 2026 — uso interno</p>
   </div>
 
@@ -227,21 +245,71 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
     martin: "Murh_Martin26"
   };
 
+  // ============================================================
+  // MÓDULOS — para agregar uno nuevo: sube su .html a GitHub y
+  // agrega una línea aquí. url:null = "Próximamente".
+  // ============================================================
+  const MODULOS = [
+    { nombre:'Inversión',            desc:'Capital y recuperación', url:'inversion.html' },
+    { nombre:'Ventas',               desc:'POS, IVA y rentabilidad', url:'ventas.html' },
+    { nombre:'Ventas Uber Eats',     desc:'Pedidos y ganancias',     url:null },
+    { nombre:'Costos operativos',    desc:'Gastos del negocio',      url:null },
+    { nombre:'Estado de resultados', desc:'Utilidad del periodo',    url:null }
+  ];
+
   const form = document.getElementById('loginForm');
   const errEl = document.getElementById('err');
+  const card = document.querySelector('.card');
+
+  function mostrarModulos(name){
+    document.getElementById('loginView').style.display = 'none';
+    document.getElementById('modulos').style.display = 'block';
+    card.classList.add('wide');
+    document.querySelector('.sub').textContent = 'Selecciona un módulo';
+    document.getElementById('welcome').textContent = 'Hola, ' + name;
+    const grid = document.getElementById('modsGrid');
+    grid.innerHTML = '';
+    MODULOS.forEach(m => {
+      const el = document.createElement(m.url ? 'a' : 'div');
+      el.className = 'mod' + (m.url ? '' : ' off');
+      if(m.url) el.href = m.url + '?user=' + encodeURIComponent(name);
+      el.innerHTML = (m.url ? '' : '<span class="tag">Próx.</span>') + m.nombre + '<small>' + m.desc + '</small>';
+      grid.appendChild(el);
+    });
+  }
+
+  function mostrarLogin(){
+    document.getElementById('loginView').style.display = 'block';
+    document.getElementById('modulos').style.display = 'none';
+    card.classList.remove('wide');
+    document.querySelector('.sub').textContent = 'Panel interno · Acceso';
+  }
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
     const user = document.getElementById('user').value;
     const pass = document.getElementById('pass').value;
-
     if(CREDS[user] && CREDS[user] === pass){
       const displayName = user === 'marco' ? 'Marco' : 'Martín';
-      window.location.href = 'inversion.html?user=' + encodeURIComponent(displayName);
+      try{ sessionStorage.setItem('murh_user', displayName); }catch(_){}
+      mostrarModulos(displayName);
     } else {
       errEl.textContent = 'Usuario o contraseña incorrectos.';
     }
   });
+
+  document.getElementById('logout').addEventListener('click', function(){
+    try{ sessionStorage.removeItem('murh_user'); }catch(_){}
+    document.getElementById('pass').value = '';
+    mostrarLogin();
+  });
+
+  // Si ya inició sesión en esta pestaña (o viene de un módulo), muestra el menú directo
+  try{
+    if(location.search.includes('salir')) sessionStorage.removeItem('murh_user');
+    const u = sessionStorage.getItem('murh_user');
+    if(u) mostrarModulos(u);
+  }catch(_){}
 </script>
 </body>
 </html>
