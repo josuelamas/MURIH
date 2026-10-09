@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MURH Hipódromo · Gastos operativos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --blue-deep:#14366B;
+    --blue-main:#215AB3;
+    --blue-soft:#4D7BC2;
+    --blue-pale:#E9EFF7;
+    --blue-lightest:#C8D6EC;
+    --cream:#F4F7FB;
+    --ink:#14366B;
+    --grey:#95A5BC;
+    --white:#FFFFFF;
+    --sidebar-w:250px;
+    --amber:#E9A23B;
+    --teal:#2A9D8F;
+    --coral:#E76F51;
+    --purple:#8E44AD;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Manrope',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:var(--sidebar-w);
+    background:var(--blue-deep);
+    color:var(--white);
+    display:flex;
+    flex-direction:column;
+    padding:26px 18px;
+    position:fixed;
+    top:0;left:0;bottom:0;
+    overflow-y:auto;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:30px;
+    padding:0 6px;
+  }
+  .brand .badge{
+    width:38px;height:38px;
+    background:var(--blue-main);
+    border-radius:44% 56% 52% 48% / 50% 46% 54% 50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand .badge .murh-mark{width:22px;height:22px;display:block;}
+  .brand-text{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;line-height:1.1;}
+  .brand-text span{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:10.5px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+  .menu-label{
+    font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);
+    text-transform:uppercase;letter-spacing:1.2px;
+    margin:10px 8px 10px;
+  }
+  .menu{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px;}
+  .menu li a, .menu li .disabled{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 12px;
+    border-radius:14px;
+    color:rgba(255,255,255,0.8);
+    text-decoration:none;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .menu li a.active{
+    background:var(--blue-main);
+    color:var(--white);
+    box-shadow:0 6px 16px -6px rgba(33,90,179,0.7);
+  }
+  .menu li a:hover:not(.active){background:rgba(255,255,255,0.06); color:var(--white);}
+  .menu li .disabled{color:rgba(255,255,255,0.35); cursor:default;}
+  .menu li .tag{
+    margin-left:auto;
+    font-size:9.5px;font-weight:800;
+    background:rgba(255,255,255,0.08);
+    padding:3px 7px;border-radius:8px;
+    text-transform:uppercase;letter-spacing:0.4px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:0.55;}
+  .menu li a.active .dot{background:var(--white); opacity:1;}
+
+  .sidebar-foot{
+    margin-top:auto;
+    padding:14px 12px;
+    background:rgba(255,255,255,0.06);
+    border-radius:16px;
+    font-size:12.5px;
+  }
+  .sidebar-foot .who{font-weight:800;color:var(--white);}
+  .sidebar-foot a{color:rgba(255,255,255,0.75); text-decoration:none; font-weight:700; font-size:11.5px;}
+
+  /* ---------- MAIN ---------- */
+  main{
+    margin-left:var(--sidebar-w);
+    flex:1;
+    padding:32px 40px 60px;
+    max-width:1300px;
+  }
+  .topbar{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:22px;flex-wrap:wrap;gap:16px;
+  }
+  .topbar h1{
+    font-family:'Baloo 2',sans-serif;
+    font-size:30px;font-weight:800;color:var(--blue-deep);
+    margin:0 0 4px;
+  }
+  .topbar p{margin:0;color:var(--grey);font-weight:600;font-size:14px;}
+
+  /* barra de filtros (al inicio de la página) */
+  .filters-bar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:end;
+    gap:14px;
+    background:var(--white);
+    border-radius:22px;
+    padding:16px 20px;
+    margin-bottom:24px;
+    box-shadow:0 10px 26px -16px rgba(15,30,61,0.16);
+    position:sticky;top:10px;z-index:30;
+  }
+  .filter-field{display:flex;flex-direction:column;gap:6px;min-width:140px;flex:1;}
+  .filter-field label{
+    font-size:10.5px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.6px;
+  }
+  .filter-field select, .filter-field input{
+    padding:10px 13px;
+    border-radius:12px;
+    border:1.5px solid var(--blue-pale);
+    background:var(--cream);
+    font-family:'Manrope',sans-serif;
+    font-size:13px;font-weight:700;
+    color:var(--ink);
+    outline:none;
+  }
+  .filter-field select:focus, .filter-field input:focus{border-color:var(--blue-main);}
+  .filters-bar #clearFilters{flex:0 0 auto;height:41px;align-self:end;}
+  #clearFilters{
+    background:var(--blue-pale);color:var(--blue-main);border:none;
+    padding:9px 16px;border-radius:12px;font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:12.5px;cursor:pointer;
+  }
+  #clearFilters:hover{background:var(--blue-lightest);}
+  #exportExcel{
+    background:var(--teal);color:var(--white);border:none;
+    padding:9px 16px;border-radius:12px;font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:12.5px;cursor:pointer;flex:0 0 auto;height:41px;align-self:end;
+  }
+  #exportExcel:hover{background:#238577;}
+
+  /* KPI cards */
+  .kpi-section-label{
+    font-size:11.5px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.8px;
+    margin:0 0 10px 2px;
+  }
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:18px;
+    margin-bottom:14px;
+  }
+  .kpi-grid.secondary{margin-bottom:28px;}
+  .kpi{
+    background:var(--white);
+    border-radius:26px 30px 26px 30px / 30px 26px 30px 26px;
+    padding:18px 20px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 26px -14px rgba(15,30,61,0.18);
+  }
+  .kpi::after{
+    content:"";
+    position:absolute;
+    width:90px;height:90px;
+    border-radius:50%;
+    top:-30px;right:-30px;
+    opacity:0.10;
+    background:var(--blue-main);
+  }
+  .kpi:nth-child(2)::after{background:var(--amber);}
+  .kpi:nth-child(3)::after{background:var(--teal);}
+  .kpi:nth-child(4)::after{background:var(--purple);}
+  .kpi:nth-child(2) .val{color:#B9791F;}
+  .kpi:nth-child(3) .val{color:var(--teal);}
+  .kpi:nth-child(4) .val{color:var(--purple);}
+  .kpi .lbl{font-size:11px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;}
+  .kpi .val{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--blue-deep);}
+  .kpi .sub{font-size:11.5px;font-weight:600;color:var(--grey);margin-top:4px;}
+
+  /* charts row */
+  .charts-row{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:18px;
+    margin-bottom:18px;
+  }
+  .panel{
+    background:var(--white);
+    border-radius:26px;
+    padding:22px 24px;
+    box-shadow:0 10px 26px -14px rgba(15,30,61,0.14);
+  }
+  .panel h3{
+    font-family:'Baloo 2',sans-serif;
+    font-size:17px;font-weight:700;color:var(--blue-deep);
+    margin:0 0 14px;
+  }
+  .chart-box{position:relative; height:260px;}
+  .chart-box.tall{height:320px;}
+
+  /* table */
+  .table-panel{background:var(--white);border-radius:26px;padding:22px 24px;box-shadow:0 10px 26px -14px rgba(15,30,61,0.14);}
+  .table-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:10px;}
+  .table-scroll{overflow-x:auto; max-height:520px; overflow-y:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px;}
+  thead th{
+    position:sticky; top:0; z-index:1;
+    text-align:left;
+    font-size:11px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.5px;
+    padding:0 10px 10px;
+    border-bottom:2px solid var(--blue-pale);
+    background:var(--white);
+  }
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--blue-pale);font-weight:600;color:var(--ink);}
+  tbody tr:hover{background:var(--cream);}
+  tfoot .totals-row td{
+    padding:13px 10px;
+    font-weight:800;
+    color:var(--white);
+    background:var(--blue-deep);
+    border-bottom:none;
+    position:sticky; bottom:0;
+  }
+  tfoot .totals-row td:first-child{border-radius:0 0 0 14px; text-transform:uppercase; font-size:11.5px; letter-spacing:0.6px;}
+  tfoot .totals-row td:last-child{border-radius:0 0 14px 0;}
+  tfoot .totals-row td.num{color:var(--white);}
+  .cat-pill{
+    display:inline-block;padding:4px 10px;border-radius:9px;
+    font-size:11px;font-weight:800;background:var(--blue-pale);color:var(--blue-main);
+  }
+  .num{font-family:'Manrope',sans-serif;font-weight:800;color:var(--blue-deep);}
+  .no-rows{padding:26px 10px;text-align:center;color:var(--grey);font-weight:600;font-size:13px;}
+
+  @media (max-width:1050px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .charts-row{grid-template-columns:1fr;}
+  }
+  @media (max-width:760px){
+    .sidebar{position:relative;width:100%;height:auto;}
+    main{margin-left:0;padding:24px 18px 50px;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+  }
+  .pill-t{display:inline-block;padding:4px 10px;border-radius:9px;font-size:11px;font-weight:800;}
+  .pill-t.G{background:#E9EFF7;color:#215AB3;} .pill-t.N{background:#FBEFD9;color:#B7791F;}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="badge">
+      <svg viewBox="0 0 447 447" xmlns="http://www.w3.org/2000/svg" class="murh-mark"><g transform="translate(0.000000,447.000000) scale(0.100000,-0.100000)" fill="#ffffff" stroke="none"><path d="M0 2235 l0 -2235 2235 0 2235 0 0 2235 0 2235 -2235 0 -2235 0 0
+-2235z m2077 1149 c120 -57 196 -221 164 -351 -7 -26 -34 -95 -61 -153 -64
+-139 -75 -216 -55 -370 16 -123 11 -169 -24 -218 -47 -67 -177 -58 -239 17
+-33 39 -62 118 -62 166 0 76 14 114 111 316 75 154 91 195 91 234 0 60 -22 85
+-73 85 -32 0 -40 -5 -57 -32 -11 -18 -22 -46 -26 -61 -4 -16 -18 -40 -32 -54
+-27 -27 -46 -27 -118 0 -69 26 -112 -4 -130 -89 -8 -35 8 -90 60 -206 57 -126
+56 -254 -1 -384 -90 -204 -303 -226 -356 -37 -14 50 -9 72 65 278 54 151 49
+239 -23 390 -44 92 -61 145 -61 196 0 97 71 216 147 245 102 39 221 -31 254
+-149 15 -55 37 -45 77 33 47 92 57 105 97 136 66 50 156 53 252 8z m480 -25
+c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
+-16 -60 35 -121 76 -90 9 6 25 52 36 106 27 126 57 186 128 249 121 109 135
+125 163 185 16 33 33 86 39 116 13 70 28 98 62 116 61 31 168 2 212 -59 30
+-41 33 -145 7 -219 -43 -123 -118 -203 -300 -321 -85 -55 -105 -94 -130 -255
+-22 -137 -47 -201 -95 -236 -75 -57 -186 -61 -259 -10 -53 38 -111 136 -134
+228 -23 94 -8 193 46 319 53 124 61 156 61 267 0 189 51 284 170 321 37 11 73
+10 107 -2z m505 -649 c27 -33 23 -48 -27 -94 -42 -38 -47 -47 -55 -109 -13
+-92 -32 -132 -70 -152 -62 -32 -121 4 -139 84 -17 77 18 200 72 249 59 55 182
+67 219 22z m118 -115 c44 -40 44 -163 1 -258 -31 -66 -84 -100 -166 -105 -58
+-4 -66 -2 -89 21 -31 31 -33 51 -7 75 10 9 31 28 45 41 14 13 28 33 30 45 27
+152 39 179 86 202 26 14 73 3 100 -21z m-1303 -359 c32 -20 63 -78 63 -115 0
+-35 -30 -90 -62 -114 -18 -13 -60 -34 -92 -47 -59 -24 -135 -75 -168 -114 -10
+-12 -23 -37 -29 -57 -10 -31 -7 -46 21 -125 86 -241 104 -351 75 -449 -48
+-167 -247 -206 -329 -65 -29 49 -27 180 3 324 37 172 26 234 -64 360 -42 57
+-45 99 -14 164 46 94 127 106 225 32 30 -23 61 -39 68 -37 8 3 16 25 20 49 15
+97 88 199 154 214 15 3 32 7 37 9 19 6 60 -7 92 -29z m965 14 c45 -13 85 -58
+94 -107 10 -54 -32 -128 -120 -210 -39 -36 -79 -77 -88 -92 -35 -52 -13 -139
+31 -127 60 17 138 27 169 21 79 -15 148 -74 178 -151 17 -46 17 -48 -7 -118
+-30 -87 -30 -162 0 -230 27 -62 21 -98 -23 -131 -106 -81 -260 -71 -316 20
+-52 85 -48 143 16 209 30 32 44 55 44 74 0 70 -83 136 -141 112 -31 -13 -75
+-71 -95 -127 -7 -21 -13 -79 -14 -130 0 -103 -11 -138 -51 -159 -35 -18 -120
+-18 -162 0 -44 18 -95 78 -103 122 -10 56 3 157 28 216 12 29 53 91 91 138 93
+116 132 198 162 345 27 129 40 163 93 238 33 46 68 71 122 88 35 10 50 10 92
+-1z m-528 -140 c151 -93 140 -244 -31 -432 -107 -118 -136 -191 -113 -293 34
+-157 20 -201 -82 -255 -80 -43 -153 -13 -201 80 -23 44 -27 64 -23 97 8 60 40
+150 102 288 61 135 65 169 34 260 -24 70 -25 113 -5 163 21 49 51 80 100 104
+54 25 169 19 219 -12z"/></g></svg>
+    </div>
+    <div class="brand-text">MURH<span>Hipódromo · Panel</span></div>
+  </div>
+
+  <div class="menu-label">Módulos financieros</div>
+  <ul class="menu">
+    <li><a href="inversion.html"><span class="dot"></span> Inversión</a></li>
+    <li><a href="ventas.html"><span class="dot"></span> Ventas</a></li>
+    <li><a href="ventas-ubereats.html"><span class="dot"></span> Ventas Uber Eats</a></li>
+    <li><a class="active" href="gastos-operativos.html"><span class="dot"></span> Gastos operativos</a></li>
+    <li><span class="disabled"><span class="dot"></span> Estado de resultados <span class="tag">Próx.</span></span></li>
+  </ul>
+
+  <div class="sidebar-foot">
+    <div class="who" id="whoami">Hola</div>
+    <a href="index.html?salir=1">Cerrar sesión</a>
+  </div>
+</aside>
+<main>
+  <div class="topbar">
+    <div>
+      <h1>Gastos operativos</h1>
+      <p>Compras, insumos y nómina de MURH Hipódromo</p>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-field"><label for="fMes">Mes</label><select id="fMes"></select></div>
+    <div class="filter-field"><label for="fTipo">Tipo</label>
+      <select id="fTipo"><option value="all">Gastos + Nómina</option><option value="G">Solo gastos (compras)</option><option value="N">Solo nómina</option></select></div>
+    <div class="filter-field"><label for="fCat">Categoría</label><select id="fCat"></select></div>
+    <div class="filter-field"><label for="fPago">Forma de pago</label><select id="fPago"></select></div>
+    <div class="filter-field"><label for="fDow">Día de la semana</label><select id="fDow"></select></div>
+    <div class="filter-field"><label for="fIva">IVA</label>
+      <select id="fIva"><option value="con">Total (con IVA)</option><option value="sin">Sin IVA (subtotal)</option></select></div>
+    <div class="filter-field"><label for="fBuscar">Buscar</label><input type="text" id="fBuscar" placeholder="Descripción, proveedor o persona…"></div>
+    <button id="clearFilters" type="button">Limpiar filtros</button>
+    <button id="exportExcel" type="button">⬇ Exportar a Excel</button>
+  </div>
+
+  <p class="kpi-section-label">Resumen (según filtros)</p>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="lbl">Gasto operativo total</div><div class="val" id="kTotal">—</div><div class="sub" id="kTotalSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Compras y gastos</div><div class="val" id="kGas">—</div><div class="sub" id="kGasSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Nómina</div><div class="val" id="kNom">—</div><div class="sub" id="kNomSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Gasto promedio / día</div><div class="val" id="kProm">—</div><div class="sub" id="kPromSub">&nbsp;</div></div>
+  </div>
+  <div class="kpi-grid secondary">
+    <div class="kpi"><div class="lbl">Categoría con más gasto</div><div class="val" id="kTopCat" style="font-size:18px;">—</div><div class="sub" id="kTopCatSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Proveedor con más gasto</div><div class="val" id="kTopProv" style="font-size:16px;">—</div><div class="sub" id="kTopProvSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Pagado en efectivo</div><div class="val" id="kEfe">—</div><div class="sub" id="kEfeSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Pagado por socios</div><div class="val" id="kSoc">—</div><div class="sub" id="kSocSub">&nbsp;</div></div>
+  </div>
+
+  <div class="charts-row">
+    <div class="panel"><h3>Tendencia de gasto diario</h3><div class="chart-box tall"><canvas id="dayChart"></canvas></div></div>
+    <div class="panel"><h3>Tendencia por mes</h3><div class="chart-box tall"><canvas id="monthChart"></canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="panel"><h3>Participación por categoría ($)</h3><div class="chart-box tall"><canvas id="catPie"></canvas></div></div>
+    <div class="panel"><h3>Top 10 proveedores ($)</h3><div class="chart-box tall"><canvas id="provChart"></canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="panel"><h3>Forma de pago ($)</h3><div class="chart-box tall"><canvas id="pagoPie"></canvas></div></div>
+    <div class="panel"><h3>Gasto por día de la semana</h3><div class="chart-box tall"><canvas id="dowChart"></canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="panel"><h3>Nómina por persona ($)</h3><div class="chart-box"><canvas id="nomPersChart"></canvas></div></div>
+    <div class="panel"><h3>Nómina por semana ($)</h3><div class="chart-box"><canvas id="nomSemChart"></canvas></div></div>
+  </div>
+
+  <div class="table-panel">
+    <div class="table-head-row"><h3>Resumen por categoría</h3></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Categoría</th><th>Movimientos</th><th>Importe</th><th>% del total</th></tr></thead>
+      <tbody id="catBody"></tbody>
+      <tfoot><tr class="totals-row"><td>Totales</td><td class="num" id="ctN">—</td><td class="num" id="ctM">—</td><td></td></tr></tfoot>
+    </table></div>
+  </div>
+  <div style="height:18px"></div>
+  <div class="table-panel">
+    <div class="table-head-row"><h3>Detalle de movimientos</h3></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Categoría</th><th>Proveedor / Persona</th><th>Forma de pago</th><th>Importe</th></tr></thead>
+      <tbody id="detBody"></tbody>
+      <tfoot><tr class="totals-row"><td colspan="6">Totales</td><td class="num" id="dtM">—</td></tr></tfoot>
+    </table></div>
+  </div>
+  <p style="font-size:12px;font-weight:600;color:var(--grey);margin:14px 4px 30px;">
+    El filtro "Sin IVA" aplica solo a las compras (hay 2 con IVA 8%); la nómina no lleva IVA. En nómina, el mes es el del periodo trabajado según tu Excel, no la fecha de pago. "Josue" y "Martín" como forma de pago son gastos que pagó cada socio.
+  </p>
+</main>
+
+<script>
+const REG = [{"t": "G", "f": "2026-08-21", "m": "2026-08", "d": "XITA", "c": "Postres", "p": "Efectivo", "v": "Arqui", "s": 630, "n": 630}, {"t": "G", "f": "2026-08-21", "m": "2026-08", "d": "Fumigacion", "c": "Fumigación", "p": "Transferencia", "v": "Finsectos S.A de C.V", "s": 1200, "n": 1296}, {"t": "G", "f": "2026-08-21", "m": "2026-08", "d": "vasos y tapas", "c": "Desechables", "p": "Transferencia", "v": "Francisco Daniel", "s": 4334.07, "n": 4680.8}, {"t": "G", "f": "2026-08-21", "m": "2026-08", "d": "Caramelo, Vainilla,Lavanda,Cacao", "c": "Jarabes", "p": "Transferencia", "v": "Red Hill Coffe CO", "s": 2200, "n": 2200}, {"t": "G", "f": "2026-08-22", "m": "2026-08", "d": "Leches", "c": "Leches", "p": "Débito", "v": "Restaurant Deport", "s": 1137.39, "n": 1137.39}, {"t": "G", "f": "2026-08-23", "m": "2026-08", "d": "INSUMOS", "c": "Insumos", "p": "Débito", "v": "Costco", "s": 6278.19, "n": 6278.19}, {"t": "N", "f": "2026-08-23", "m": "2026-08", "d": "Semana 34", "c": "Nómina", "p": "Martín", "v": "Will", "s": 700, "n": 700, "w": 34}, {"t": "N", "f": "2026-08-23", "m": "2026-08", "d": "Semana 34", "c": "Nómina", "p": "Martín", "v": "Benjamin", "s": 600, "n": 600, "w": 34}, {"t": "N", "f": "2026-08-23", "m": "2026-08", "d": "Semana 34", "c": "Nómina", "p": "Martín", "v": "Sofi", "s": 600, "n": 600, "w": 34}, {"t": "G", "f": "2026-08-24", "m": "2026-08", "d": "INSUMOS", "c": "Insumos", "p": "Débito", "v": "Costco", "s": 2350.8, "n": 2350.8}, {"t": "G", "f": "2026-08-25", "m": "2026-08", "d": "Mercancias General", "c": "Mercancías", "p": "Efectivo", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 461.9, "n": 461.9}, {"t": "G", "f": "2026-08-25", "m": "2026-08", "d": "Cafe", "c": "Insumos", "p": "Débito", "v": "Excelso", "s": 5690, "n": 5690}, {"t": "G", "f": "2026-08-26", "m": "2026-08", "d": "Mercancias General", "c": "Mercancías", "p": "Débito", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 55.9, "n": 55.9}, {"t": "G", "f": "2026-08-26", "m": "2026-08", "d": "Mercancias General", "c": "Mercancías", "p": "Efectivo", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 111.8, "n": 111.8}, {"t": "G", "f": "2026-08-26", "m": "2026-08", "d": "INSUMOS", "c": "Insumos", "p": "Débito", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 3660.31, "n": 3660.31}, {"t": "G", "f": "2026-08-27", "m": "2026-08", "d": "Mercancias General", "c": "Mercancías", "p": "Débito", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 188, "n": 188}, {"t": "G", "f": "2026-08-27", "m": "2026-08", "d": "INSUMOS", "c": "Insumos", "p": "Débito", "v": "Dulces Brenda", "s": 1440, "n": 1440}, {"t": "G", "f": "2026-08-28", "m": "2026-08", "d": "Postres de Ojaldre 5rolls 21 crosain", "c": "Postres", "p": "Efectivo", "v": "Ayumis", "s": 1222, "n": 1222}, {"t": "G", "f": "2026-08-28", "m": "2026-08", "d": "Jarabe Pupking", "c": "Jarabes", "p": "Efectivo", "v": "Red Hill Coffe CO", "s": 220, "n": 220}, {"t": "G", "f": "2026-08-28", "m": "2026-08", "d": "INSUMOS", "c": "Insumos", "p": "Débito", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 844.11, "n": 844.11}, {"t": "G", "f": "2026-08-28", "m": "2026-08", "d": "Jarabe Mango", "c": "Insumos", "p": "Efectivo", "v": "Brown Butter", "s": 1375, "n": 1375}, {"t": "N", "f": "2026-08-28", "m": "2026-08", "d": "Semana 35", "c": "Nómina", "p": "Martín", "v": "Leo", "s": 800, "n": 800, "w": 35}, {"t": "N", "f": "2026-08-28", "m": "2026-08", "d": "Semana 35", "c": "Nómina", "p": "Martín", "v": "Eve", "s": 1500, "n": 1500, "w": 35}, {"t": "N", "f": "2026-08-28", "m": "2026-08", "d": "Semana 35", "c": "Nómina", "p": "Martín", "v": "Adaly", "s": 1000, "n": 1000, "w": 35}, {"t": "G", "f": "2026-08-29", "m": "2026-08", "d": "Mercancias General", "c": "Mercancías", "p": "Débito", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 227.04, "n": 227.04}, {"t": "G", "f": "2026-08-29", "m": "2026-08", "d": "Aireacondicionado", "c": "Mantenimiento", "p": "Transferencia", "v": "Sin proveedor", "s": 1800, "n": 1800}, {"t": "G", "f": "2026-08-29", "m": "2026-08", "d": "INSUMOS", "c": "Insumos", "p": "Débito", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 202.6, "n": 202.6}, {"t": "G", "f": "2026-08-30", "m": "2026-08", "d": "Galletas 8 lotus 8 smore 8 chocolate", "c": "Postres", "p": "Efectivo", "v": "Brown Butter", "s": 1320, "n": 1320}, {"t": "G", "f": "2026-08-30", "m": "2026-08", "d": "INSUMOS", "c": "Insumos", "p": "Débito", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 139.5, "n": 139.5}, {"t": "G", "f": "2026-08-31", "m": "2026-08", "d": "Mercancias General", "c": "Mercancías", "p": "Débito", "v": "Smart & Final del Noroeste, S.A. de C.V.", "s": 1651.02, "n": 1651.02}, {"t": "G", "f": "2026-09-01", "m": "2026-09", "d": "Galletas De Zanahoria", "c": "Postres", "p": "Efectivo", "v": "Galletas De Zanahoria", "s": 600, "n": 600}, {"t": "G", "f": "2026-09-01", "m": "2026-09", "d": "Jarras vidrio", "c": "Contenedores", "p": "Efectivo", "v": "TJ Max", "s": 330.82, "n": 330.82}, {"t": "G", "f": "2026-09-01", "m": "2026-09", "d": "Cafe", "c": "Insumos", "p": "Débito", "v": "Excelso", "s": 5390, "n": 5390}, {"t": "G", "f": "2026-09-02", "m": "2026-09", "d": "Extintor", "c": "Permisos", "p": "Efectivo", "v": "Extinguidores Salgado", "s": 550, "n": 550}, {"t": "G", "f": "2026-09-02", "m": "2026-09", "d": "Jarabes Beries", "c": "Jarabes", "p": "Transferencia", "v": "Red Hills", "s": 600, "n": 600}, {"t": "G", "f": "2026-09-03", "m": "2026-09", "d": "Hielos limones etc", "c": "Insumos", "p": "Débito", "v": "Smart&Final", "s": 651.19, "n": 651.19}, {"t": "G", "f": "2026-09-03", "m": "2026-09", "d": "Tijeras nota", "c": "Papelería", "p": "Débito", "v": "Office Depot", "s": 111.6, "n": 111.6}, {"t": "G", "f": "2026-09-04", "m": "2026-09", "d": "Ayumis Postres", "c": "Postres", "p": "Efectivo", "v": "Ayumis", "s": 752, "n": 752}, {"t": "G", "f": "2026-09-04", "m": "2026-09", "d": "Hielos limones etc", "c": "Insumos", "p": "Débito", "v": "Smart&Final", "s": 329.42, "n": 329.42}, {"t": "N", "f": "2026-09-04", "m": "2026-09", "d": "Semana 36", "c": "Nómina", "p": "Martín", "v": "Eve", "s": 3200, "n": 3200, "w": 36}, {"t": "N", "f": "2026-09-04", "m": "2026-09", "d": "Semana 36", "c": "Nómina", "p": "Martín", "v": "Will", "s": 2400, "n": 2400, "w": 36}, {"t": "N", "f": "2026-09-04", "m": "2026-09", "d": "Semana 36", "c": "Nómina", "p": "Martín", "v": "Adaly", "s": 1000, "n": 1000, "w": 36}, {"t": "G", "f": "2026-09-07", "m": "2026-09", "d": "Hielos limones etc", "c": "Insumos", "p": "Débito", "v": "Smart&Final", "s": 1498.34, "n": 1498.34}, {"t": "G", "f": "2026-09-07", "m": "2026-09", "d": "Matcha", "c": "Insumos", "p": "Débito", "v": "Sinesis", "s": 4170, "n": 4170}, {"t": "G", "f": "2026-09-07", "m": "2026-09", "d": "Flores", "c": "Decoración", "p": "Efectivo", "v": "Floreria", "s": 350, "n": 350}, {"t": "G", "f": "2026-09-08", "m": "2026-09", "d": "Jarabe Vainilla", "c": "Jarabes", "p": "Efectivo", "v": "Red Hills", "s": 800, "n": 800}, {"t": "G", "f": "2026-09-08", "m": "2026-09", "d": "Leches agua", "c": "Insumos", "p": "Débito", "v": "Smart&Final", "s": 555.57, "n": 555.57}, {"t": "G", "f": "2026-09-08", "m": "2026-09", "d": "Bote, baura, limpieza", "c": "General", "p": "Josue", "v": "Home Depot", "s": 599, "n": 599}, {"t": "G", "f": "2026-09-09", "m": "2026-09", "d": "5 rol,5pistache,58almendra,14chese", "c": "Postres", "p": "Efectivo", "v": "Ayumis", "s": 1500, "n": 1500}, {"t": "G", "f": "2026-09-09", "m": "2026-09", "d": "12 leches 1 crema", "c": "Leches", "p": "Efectivo", "v": "Smart&Final", "s": 830.7, "n": 830.7}, {"t": "G", "f": "2026-09-09", "m": "2026-09", "d": "Jarabe Mango", "c": "Insumos", "p": "Efectivo", "v": "Ojos Miel", "s": 880, "n": 880}, {"t": "G", "f": "2026-09-10", "m": "2026-09", "d": "Crosains", "c": "Promo Uber", "p": "Efectivo", "v": "Arqui", "s": 300, "n": 300}, {"t": "G", "f": "2026-09-11", "m": "2026-09", "d": "canela", "c": "Insumos", "p": "Efectivo", "v": "abarrotes el 4", "s": 100, "n": 100}, {"t": "G", "f": "2026-09-11", "m": "2026-09", "d": "Crema popotes,aguas mineral y tonica", "c": "Insumos", "p": "Efectivo", "v": "Smart&Final", "s": 1123.4, "n": 1123.4}, {"t": "G", "f": "2026-09-11", "m": "2026-09", "d": "Platanos, limon amarillo", "c": "Insumos", "p": "Efectivo", "v": "Fruteria el paraiso", "s": 287.15, "n": 287.15}, {"t": "G", "f": "2026-09-11", "m": "2026-09", "d": "Bolsa Postre, toronja deshidratada", "c": "Insumos", "p": "Efectivo", "v": "Brendas", "s": 156, "n": 156}, {"t": "G", "f": "2026-09-11", "m": "2026-09", "d": "jarbe de Platano", "c": "Insumos", "p": "Efectivo", "v": "Jarabe Platano", "s": 240, "n": 240}, {"t": "G", "f": "2026-09-11", "m": "2026-09", "d": "Leche", "c": "Insumos", "p": "Efectivo", "v": "Jersey", "s": 1674, "n": 1674}, {"t": "G", "f": "2026-09-11", "m": "2026-09", "d": "Papel de Baño", "c": "Insumos", "p": "Efectivo", "v": "Roma", "s": 28, "n": 28}, {"t": "N", "f": "2026-09-11", "m": "2026-09", "d": "Semana 37", "c": "Nómina", "p": "Martín", "v": "Will", "s": 2400, "n": 2400, "w": 37}, {"t": "N", "f": "2026-09-11", "m": "2026-09", "d": "Semana 37", "c": "Nómina", "p": "Martín", "v": "Eve", "s": 3200, "n": 3200, "w": 37}, {"t": "N", "f": "2026-09-11", "m": "2026-09", "d": "Semana 37", "c": "Nómina", "p": "Martín", "v": "Adaly", "s": 1000, "n": 1000, "w": 37}, {"t": "G", "f": "2026-09-12", "m": "2026-09", "d": "Cookies", "c": "Insumos", "p": "Efectivo", "v": "Brown Butter", "s": 1320, "n": 1320}, {"t": "G", "f": "2026-09-12", "m": "2026-09", "d": "Servilletas Crema", "c": "Insumos", "p": "Josue", "v": "Smart&Final", "s": 427.8, "n": 427.8}, {"t": "G", "f": "2026-09-12", "m": "2026-09", "d": "windex y tapas", "c": "Insumos", "p": "Efectivo", "v": "smart&Final", "s": 119.8, "n": 119.8}, {"t": "G", "f": "2026-09-12", "m": "2026-09", "d": "Arqui Promo", "c": "Insumos", "p": "Efectivo", "v": "Arqui", "s": 586, "n": 586}, {"t": "G", "f": "2026-09-14", "m": "2026-09", "d": "Limones", "c": "Insumos", "p": "Efectivo", "v": "Fruteria el paraiso", "s": 288.37, "n": 288.37}, {"t": "G", "f": "2026-09-14", "m": "2026-09", "d": "Toronjas", "c": "Insumos", "p": "Efectivo", "v": "Brendas", "s": 304, "n": 304}, {"t": "G", "f": "2026-09-14", "m": "2026-09", "d": "8Roll,8Alm,5Pist,7ches", "c": "Insumos", "p": "Efectivo", "v": "Ayumis", "s": 1316, "n": 1316}, {"t": "G", "f": "2026-09-14", "m": "2026-09", "d": "Hielo,Toni,queso", "c": "Insumos", "p": "Efectivo", "v": "Smart&Final", "s": 630, "n": 630}, {"t": "G", "f": "2026-09-15", "m": "2026-09", "d": "RENTA", "c": "Renta", "p": "Josue", "v": "LOCAL", "s": 20000, "n": 20000}, {"t": "G", "f": "2026-09-15", "m": "2026-09", "d": "Tapas de vasos", "c": "Insumos", "p": "Efectivo", "v": "Smart&Final", "s": 80, "n": 80}, {"t": "G", "f": "2026-09-15", "m": "2026-09", "d": "vasos", "c": "Insumos", "p": "Transferencia", "v": "Bacal Insumos", "s": 1458, "n": 1458}, {"t": "G", "f": "2026-09-16", "m": "2026-09", "d": "pasteles de crepas", "c": "Insumos", "p": "Efectivo", "v": "La Local", "s": 668, "n": 668}, {"t": "G", "f": "2026-09-16", "m": "2026-09", "d": "cremas", "c": "Insumos", "p": "Efectivo", "v": "Smart&Final", "s": 563.7, "n": 563.7}, {"t": "G", "f": "2026-09-16", "m": "2026-09", "d": "Protectores", "c": "General", "p": "Josue", "v": "Home Depot", "s": 240, "n": 240}, {"t": "G", "f": "2026-09-16", "m": "2026-09", "d": "Flores", "c": "General", "p": "Efectivo", "v": "Flores", "s": 350, "n": 350}, {"t": "N", "f": "2026-09-16", "m": "2026-09", "d": "Semana 37", "c": "Nómina", "p": "Efectivo", "v": "Adaly", "s": 1500, "n": 1500, "w": 37}, {"t": "G", "f": "2026-09-17", "m": "2026-09", "d": "3 latas 1 abrelatas", "c": "Insumos", "p": "Efectivo", "v": "smart&Final", "s": 327.6, "n": 327.6}, {"t": "G", "f": "2026-09-18", "m": "2026-09", "d": "Jarabe Mango Caramelo", "c": "Insumos", "p": "Efectivo", "v": "Ojos Miel", "s": 1360, "n": 1360}, {"t": "G", "f": "2026-09-18", "m": "2026-09", "d": "pasteles de crepas", "c": "Insumos", "p": "Efectivo", "v": "La Local", "s": 468, "n": 468}, {"t": "G", "f": "2026-09-18", "m": "2026-09", "d": "Leche", "c": "Insumos", "p": "Efectivo", "v": "Jersey", "s": 1674, "n": 1674}, {"t": "G", "f": "2026-09-18", "m": "2026-09", "d": "Hielo Roma", "c": "Insumos", "p": "Efectivo", "v": "La roma", "s": 86, "n": 86}, {"t": "G", "f": "2026-09-18", "m": "2026-09", "d": "Platanos", "c": "Insumos", "p": "Débito", "v": "Calimax", "s": 27.36, "n": 27.36}, {"t": "G", "f": "2026-09-18", "m": "2026-09", "d": "5rll 3 pistache 8 chees 6 almendras", "c": "Insumos", "p": "Efectivo", "v": "Ayumis", "s": 1034, "n": 1034}, {"t": "G", "f": "2026-09-19", "m": "2026-09", "d": "Galletas De Zanahoria", "c": "Insumos", "p": "Efectivo", "v": "Zanahoria", "s": 600, "n": 600}, {"t": "G", "f": "2026-09-20", "m": "2026-09", "d": "8 lotus, 8 choco, 8 smurft", "c": "Insumos", "p": "Efectivo", "v": "Brown Butter", "s": 1340, "n": 1340}, {"t": "N", "f": "2026-09-20", "m": "2026-09", "d": "Semana 38", "c": "Nómina", "p": "Efectivo", "v": "Eve", "s": 2200, "n": 2200, "w": 38}, {"t": "N", "f": "2026-09-20", "m": "2026-09", "d": "Semana 38", "c": "Nómina", "p": "Martín", "v": "Adaly", "s": 2000, "n": 2000, "w": 38}, {"t": "G", "f": "2026-09-21", "m": "2026-09", "d": "Hielo y Limones", "c": "Insumos", "p": "Efectivo", "v": "Smart&Final", "s": 503.33, "n": 503.33}, {"t": "G", "f": "2026-09-22", "m": "2026-09", "d": "Llaves", "c": "General", "p": "Efectivo", "v": "Cerrajero de la Esquina", "s": 205, "n": 205}, {"t": "G", "f": "2026-09-22", "m": "2026-09", "d": "6 Pure de Calabaza, 2 lyncont", "c": "Insumos", "p": "Débito", "v": "smart&Final", "s": 635, "n": 635}, {"t": "G", "f": "2026-09-23", "m": "2026-09", "d": "Papeleria", "c": "General", "p": "Débito", "v": "Papelia", "s": 83.5, "n": 83.5}, {"t": "G", "f": "2026-09-23", "m": "2026-09", "d": "3 Pista, 3 Roll 6 Roll 6 ches 6 almendra", "c": "Insumos", "p": "Efectivo", "v": "Ayumis", "s": 1131, "n": 1131}, {"t": "G", "f": "2026-09-24", "m": "2026-09", "d": "2Crema lyncont, crema para batir, platanos, agua tonica, 4hielos", "c": "Insumos", "p": "Débito", "v": "smart&Final", "s": 1249.39, "n": 1249.39}, {"t": "G", "f": "2026-09-24", "m": "2026-09", "d": "Agua Local", "c": "General", "p": "Efectivo", "v": "Agua Local", "s": 1985, "n": 1985}, {"t": "G", "f": "2026-09-24", "m": "2026-09", "d": "Filtro de Agua", "c": "General", "p": "Josue", "v": "Filtro de Agua", "s": 718.2, "n": 718.2}, {"t": "G", "f": "2026-09-24", "m": "2026-09", "d": "144 latas", "c": "Insumos", "p": "Josue", "v": "Smart&Final", "s": 2140, "n": 2140}, {"t": "G", "f": "2026-09-24", "m": "2026-09", "d": "Flores", "c": "General", "p": "Efectivo", "v": "Flores", "s": 350, "n": 350}, {"t": "G", "f": "2026-09-24", "m": "2026-09", "d": "Anuncio Pupking", "c": "General", "p": "Efectivo", "v": "Publicidad", "s": 450, "n": 450}, {"t": "G", "f": "2026-09-24", "m": "2026-09", "d": "MERCADOTECNIA", "c": "General", "p": "Efectivo", "v": "Marco", "s": 1450, "n": 1450}, {"t": "G", "f": "2026-09-25", "m": "2026-09", "d": "4,rolls,4 pistache,chese,2 almendra", "c": "Insumos", "p": "Efectivo", "v": "Ayumis", "s": 658, "n": 658}, {"t": "G", "f": "2026-09-25", "m": "2026-09", "d": "6 Cajas De Leche", "c": "Insumos", "p": "Efectivo", "v": "Jersey", "s": 2008, "n": 2008}, {"t": "G", "f": "2026-09-25", "m": "2026-09", "d": "Jarabes 1 berries,1lavanda,1 caramelo, pupking", "c": "Insumos", "p": "Efectivo", "v": "Red Hills", "s": 1700, "n": 1700}, {"t": "G", "f": "2026-09-25", "m": "2026-09", "d": "Bolsas de Papel, porta vasos", "c": "Insumos", "p": "Débito", "v": "Brendas", "s": 158, "n": 158}, {"t": "G", "f": "2026-09-25", "m": "2026-09", "d": "papeles, limones, fabuloso", "c": "Insumos", "p": "Débito", "v": "Walmart", "s": 411.93, "n": 411.93}, {"t": "N", "f": "2026-09-25", "m": "2026-09", "d": "Semana 39", "c": "Nómina", "p": "Martín", "v": "Adaly", "s": 2000, "n": 2000, "w": 39}, {"t": "N", "f": "2026-09-25", "m": "2026-09", "d": "Semana 39", "c": "Nómina", "p": "Efectivo", "v": "Eve", "s": 3200, "n": 3200, "w": 39}, {"t": "G", "f": "2026-09-28", "m": "2026-09", "d": "Cafe", "c": "Insumos", "p": "Débito", "v": "Excelso", "s": 5390, "n": 5390}, {"t": "G", "f": "2026-09-29", "m": "2026-09", "d": "platano", "c": "Insumos", "p": "Débito", "v": "Walmart", "s": 11.97, "n": 11.97}, {"t": "G", "f": "2026-09-29", "m": "2026-09", "d": "crema tonicos, hielo, limon", "c": "Insumos", "p": "Débito", "v": "Smart&Final", "s": 1804.4, "n": 1804.4}, {"t": "G", "f": "2026-09-29", "m": "2026-09", "d": "pan ayumis", "c": "Insumos", "p": "Transferencia", "v": "Ayumis", "s": 752, "n": 752}, {"t": "G", "f": "2026-09-29", "m": "2026-09", "d": "Jarabe de Platano", "c": "Insumos", "p": "Transferencia", "v": "Jarabes Platano", "s": 540, "n": 540}, {"t": "G", "f": "2026-09-29", "m": "2026-09", "d": "8 lotus, 8 smuft, 8 chocolate", "c": "Insumos", "p": "Transferencia", "v": "Brown Butter", "s": 1320, "n": 1320}, {"t": "N", "f": "2026-10-02", "m": "2026-09", "d": "Semana 40", "c": "Nómina", "p": "Martín", "v": "Adaly", "s": 2000, "n": 2000, "w": 40}, {"t": "N", "f": "2026-10-02", "m": "2026-09", "d": "Semana 40", "c": "Nómina", "p": "Tarjeta", "v": "Eve", "s": 3200, "n": 3200, "w": 40}, {"t": "N", "f": "2026-10-02", "m": "2026-08", "d": "Semana 40", "c": "Nómina", "p": "Efectivo", "v": "Benjamin", "s": 500, "n": 500, "w": 40}];
+
+const params = new URLSearchParams(window.location.search);
+const usuario = params.get('user') || 'Usuario';
+document.getElementById('whoami').textContent = "Hola, " + usuario;
+
+const fmtMoney = n => "$" + Math.round(n).toLocaleString("es-MX");
+const moneyLabel = v => v>=1000 ? '$'+(v/1000).toFixed(1)+'k' : fmtMoney(v);
+const kTick = v => '$'+(v/1000).toFixed(1)+'k';
+const fmtFecha = iso => new Date(iso+"T00:00:00").toLocaleDateString("es-MX",{day:"2-digit",month:"short"});
+const fmtFechaL = iso => new Date(iso+"T00:00:00").toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"});
+const MESES={'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const diaDe = iso => DIAS[(new Date(iso+"T00:00:00").getDay()+6)%7];
+REG.forEach(r=>r.dow=diaDe(r.f));
+const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+const CHART_PALETTE=['#215AB3','#E76F51','#2A9D8F','#E9A23B','#8E44AD','#4D7BC2','#D62839','#588157','#B5838D','#457B9D'];
+const C_G='#215AB3', C_N='#E9A23B', C_T='#14366B';
+const FONT={family:'Manrope',weight:800,size:11};
+if (typeof ChartDataLabels !== 'undefined') { Chart.register(ChartDataLabels); }
+const charts={}; const mk=(id,cfg)=>{ if(charts[id]) charts[id].destroy(); charts[id]=new Chart(document.getElementById(id),cfg); };
+
+const el=id=>document.getElementById(id);
+const fMes=el('fMes'),fTipo=el('fTipo'),fCat=el('fCat'),fPago=el('fPago'),fDow=el('fDow'),fIva=el('fIva'),fBuscar=el('fBuscar');
+const uniq=(k)=>[...new Set(REG.map(r=>r[k]))].sort((a,b)=>a.localeCompare(b,'es'));
+fMes.innerHTML='<option value="all">Todos</option>'+[...new Set(REG.map(r=>r.m))].sort().map(m=>`<option value="${m}">${MESES[m.slice(5)]} ${m.slice(0,4)}</option>`).join('');
+fCat.innerHTML='<option value="all">Categoría (todas)</option>'+uniq('c').map(v=>`<option>${v}</option>`).join('');
+fPago.innerHTML='<option value="all">Todas</option>'+uniq('p').map(v=>`<option>${v}</option>`).join('');
+fDow.innerHTML='<option value="all">Todos</option>'+DIAS.map(v=>`<option>${v}</option>`).join('');
+
+const pieTip=ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ` ${ctx.label}: ${fmtMoney(ctx.parsed)} (${(ctx.parsed/t*100).toFixed(1)}%)`;};
+const pctLabel=(v,ctx)=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);const p=v/t*100;return p>=4?p.toFixed(0)+'%':'';};
+const pie=(type,labels,vals)=>({type,data:{labels,datasets:[{data:vals,backgroundColor:CHART_PALETTE,borderColor:'#FFFFFF',borderWidth:2}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700,size:10.5},boxWidth:11,padding:8}},tooltip:{callbacks:{label:pieTip}},datalabels:{color:'#fff',font:FONT,formatter:pctLabel}}}});
+const hbar=(labels,vals)=>({type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>CHART_PALETTE[i%CHART_PALETTE.length]),borderRadius:6,maxBarThickness:20}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:46}},plugins:{legend:{display:false},datalabels:{color:'#14366B',anchor:'end',align:'right',font:{family:'Manrope',weight:800,size:10.5},formatter:moneyLabel}},
+    scales:{x:{grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}},y:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700,size:10.5},color:'#14366B'}}}}});
+const vbar=(labels,vals,pal)=>({type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:labels.map((_,i)=>CHART_PALETTE[(i+pal)%CHART_PALETTE.length]),borderRadius:8,maxBarThickness:56}]},
+  options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false},datalabels:{color:'#14366B',anchor:'end',align:'top',font:FONT,formatter:moneyLabel}},
+    scales:{x:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700,size:10.5},color:'#14366B'}},y:{grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}}});
+const stackOpts=()=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},
+  plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700},boxWidth:12}},datalabels:{display:false}},
+  scales:{x:{stacked:true,grid:{display:false},ticks:{font:{family:'Manrope',weight:700},color:'#14366B',maxRotation:0,autoSkip:true}},y:{stacked:true,grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}});
+const sumBy=(rows,k)=>{const o={};rows.forEach(r=>{o[r[k]]=(o[r[k]]||0)+r.amt;});return o;};
+const topN=(o,n)=>Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,n);
+
+function render(){
+  const q=fBuscar.value.trim().toLowerCase();
+  const sin=fIva.value==='sin';
+  const rows=REG.filter(r=>
+    (fMes.value==='all'||r.m===fMes.value)&&(fTipo.value==='all'||r.t===fTipo.value)&&
+    (fCat.value==='all'||r.c===fCat.value)&&(fPago.value==='all'||r.p===fPago.value)&&
+    (fDow.value==='all'||r.dow===fDow.value)&&
+    (!q||(r.d+' '+r.v).toLowerCase().includes(q))
+  ).map(r=>({...r,amt:sin?r.s:r.n}));
+  const sum=a=>a.reduce((s,r)=>s+r.amt,0);
+  const G=rows.filter(r=>r.t==='G'),N=rows.filter(r=>r.t==='N');
+  const tot=sum(rows),dias=new Set(rows.map(r=>r.f)).size;
+  const nota=sin?'sin IVA':'con IVA';
+  const set=(id,v,s)=>{el(id).textContent=v; if(s!==undefined) el(id+'Sub').textContent=s;};
+  set('kTotal',fmtMoney(tot),rows.length+' movimientos · '+nota);
+  set('kGas',fmtMoney(sum(G)),G.length+' compras · '+(tot?(sum(G)/tot*100).toFixed(0):0)+'% del total');
+  set('kNom',fmtMoney(sum(N)),N.length+' pagos · '+(tot?(sum(N)/tot*100).toFixed(0):0)+'% del total');
+  set('kProm',dias?fmtMoney(tot/dias):'—',dias+' días con movimiento');
+  const byCat=sumBy(rows,'c'),byProv=sumBy(rows,'v'),byPago=sumBy(rows,'p');
+  const tc=topN(byCat,1)[0],tp=topN(byProv,1)[0];
+  set('kTopCat',tc?tc[0]:'—',tc?fmtMoney(tc[1])+' · '+(tot?(tc[1]/tot*100).toFixed(0):0)+'%':'');
+  set('kTopProv',tp?tp[0]:'—',tp?fmtMoney(tp[1]):'');
+  set('kEfe',fmtMoney(byPago['Efectivo']||0),'de '+fmtMoney(tot));
+  set('kSoc',fmtMoney((byPago['Josue']||0)+(byPago['Martín']||0)),'Josue '+fmtMoney(byPago['Josue']||0)+' · Martín '+fmtMoney(byPago['Martín']||0));
+
+  // diario
+  const md={};rows.forEach(r=>{const o=md[r.f]||(md[r.f]={G:0,N:0});o[r.t]+=r.amt;});
+  const fd=Object.keys(md).sort();
+  const stacked=(labels,get,showTotals)=>({labels,datasets:[
+    {type:'bar',label:'Compras y gastos',data:labels.map((_,i)=>get(i).G),backgroundColor:C_G,borderRadius:6,stack:'v',maxBarThickness:60},
+    {type:'bar',label:'Nómina',data:labels.map((_,i)=>get(i).N),backgroundColor:C_N,borderRadius:6,stack:'v',maxBarThickness:60},
+    {type:'line',label:'Total',data:labels.map((_,i)=>get(i).G+get(i).N),borderColor:C_T,backgroundColor:C_T,tension:0.35,borderWidth:3,pointRadius:3,
+      showLine:!showTotals,pointHoverRadius:showTotals?0:4,...(showTotals?{pointRadius:0}:{}),
+      datalabels:{display:showTotals||labels.length<=12,align:'top',anchor:'end',color:C_T,font:FONT,formatter:moneyLabel}}]});
+  mk('dayChart',{data:stacked(fd.map(fmtFecha),i=>md[fd[i]],false),options:stackOpts()});
+  // mensual
+  const mm={};rows.forEach(r=>{const o=mm[r.m]||(mm[r.m]={G:0,N:0});o[r.t]+=r.amt;});
+  const fm=Object.keys(mm).sort();
+  const md2=stacked(fm.map(k=>MESES[k.slice(5)].slice(0,3)+' '+k.slice(2,4)),i=>mm[fm[i]],true);
+  [0,1].forEach(i=>{md2.datasets[i].datalabels={display:true,anchor:'center',align:'center',color:i?'#14366B':'#FFFFFF',font:FONT,formatter:v=>v>0?moneyLabel(v):''};});
+  mk('monthChart',{data:md2,options:stackOpts()});
+  // categoría / proveedores / pago / dow
+  mk('catPie',pie('doughnut',Object.keys(byCat),Object.values(byCat)));
+  const tp10=topN(byProv,10);
+  mk('provChart',hbar(tp10.map(e=>e[0].length>28?e[0].slice(0,27)+'…':e[0]),tp10.map(e=>e[1])));
+  mk('pagoPie',pie('pie',Object.keys(byPago),Object.values(byPago)));
+  const dw={};DIAS.forEach(d=>dw[d]=0);rows.forEach(r=>{dw[r.dow]+=r.amt;});
+  mk('dowChart',vbar(DIAS,DIAS.map(d=>dw[d]),0));
+  // nómina
+  const nPers=sumBy(N,'v'),nPe=Object.entries(nPers).sort((a,b)=>b[1]-a[1]);
+  mk('nomPersChart',vbar(nPe.map(e=>e[0]),nPe.map(e=>e[1]),3));
+  const nSem={};N.forEach(r=>{nSem[r.w]=(nSem[r.w]||0)+r.amt;});
+  const sk=Object.keys(nSem).sort((a,b)=>a-b);
+  mk('nomSemChart',vbar(sk.map(k=>'Sem '+k),sk.map(k=>nSem[k]),1));
+  // tablas
+  const cc={};rows.forEach(r=>{const o=cc[r.c]||(cc[r.c]={n:0,m:0});o.n++;o.m+=r.amt;});
+  const cl=Object.entries(cc).sort((a,b)=>b[1].m-a[1].m);
+  el('catBody').innerHTML=cl.map(([c,o])=>`<tr><td><span class="cat-pill">${esc(c)}</span></td><td class="num">${o.n}</td><td class="num">${fmtMoney(o.m)}</td><td class="num">${tot?(o.m/tot*100).toFixed(1):0}%</td></tr>`).join('')||'<tr><td colspan="4">Sin datos</td></tr>';
+  set('ctN',rows.length);set('ctM',fmtMoney(tot));
+  const det=rows.slice().sort((a,b)=>b.f.localeCompare(a.f)||b.amt-a.amt);
+  el('detBody').innerHTML=det.map(r=>`<tr><td>${fmtFechaL(r.f)}</td><td><span class="pill-t ${r.t}">${r.t==='G'?'Gasto':'Nómina'}</span></td><td>${esc(r.d)}</td><td><span class="cat-pill">${esc(r.c)}</span></td><td>${esc(r.v)}</td><td>${esc(r.p)}</td><td class="num">${fmtMoney(r.amt)}</td></tr>`).join('')||'<tr><td colspan="7">No hay movimientos con estos filtros.</td></tr>';
+  set('dtM',fmtMoney(tot));
+  window.__rows=det; window.__cat=cl; window.__nota=nota;
+}
+[fMes,fTipo,fCat,fPago,fDow,fIva].forEach(e=>e.addEventListener('change',render));
+fBuscar.addEventListener('input',render);
+el('clearFilters').addEventListener('click',()=>{fMes.value=fTipo.value=fCat.value=fPago.value=fDow.value='all';fIva.value='con';fBuscar.value='';render();});
+el('exportExcel').addEventListener('click',()=>{
+  const wb=XLSX.utils.book_new(),r2=x=>Math.round(x*100)/100;
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(window.__rows.map(r=>({Fecha:r.f,Tipo:r.t==='G'?'Gasto':'Nómina',Descripción:r.d,Categoría:r.c,'Proveedor / Persona':r.v,'Forma de pago':r.p,Importe:r2(r.amt),IVA:window.__nota}))),'Movimientos');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(window.__cat.map(([c,o])=>({Categoría:c,Movimientos:o.n,Importe:r2(o.m),IVA:window.__nota}))),'Por categoría');
+  XLSX.writeFile(wb,'Gastos_Operativos_MURH.xlsx');
+});
+render();
+</script>
+</body>
+</html>
