@@ -330,7 +330,7 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
   <ul class="menu">
     <li><a class="active" href="inversion.html"><span class="dot"></span> Inversión</a></li>
     <li><a href="ventas.html"><span class="dot"></span> Ventas</a></li>
-    <li><span class="disabled"><span class="dot"></span> Ventas Uber Eats <span class="tag">Próx.</span></span></li>
+    <li><a href="ventas-ubereats.html"><span class="dot"></span> Ventas Uber Eats</a></li>
     <li><span class="disabled"><span class="dot"></span> Costos operativos <span class="tag">Próx.</span></span></li>
     <li><span class="disabled"><span class="dot"></span> Estado de resultados <span class="tag">Próx.</span></span></li>
   </ul>
@@ -471,6 +471,7 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
 /* ---------------- DATOS DE INVERSIÓN ---------------- */
 /* Actualiza este arreglo manualmente cada vez que haya nuevos gastos o pagos. */
 const ITEMS = [
+  { concepto:"Muebles y pintura", categoria:"Remodelación", segmento:"Credito", proveedor:"Servicios Home Depot, S. de R.L. de C.V.", mes:"2026-05", fecha:"2026-05-07", total:3457, pagado:3457 },
   { concepto:"Depósito", categoria:"Renta", segmento:"Renta", proveedor:"Sin tienda", mes:"2026-06", fecha:"2026-06-14", total:20000, pagado:20000 },
   { concepto:"Mes junio", categoria:"Renta", segmento:"Renta", proveedor:"Sin tienda", mes:"2026-06", fecha:"2026-06-14", total:20000, pagado:20000 },
   { concepto:"Traspaso", categoria:"Traspaso", segmento:"Traspaso", proveedor:"Sin tienda", mes:"2026-06", fecha:"2026-06-14", total:110000, pagado:110000 },
@@ -494,20 +495,34 @@ const ITEMS = [
   { concepto:"Iluminación interior", categoria:"Remodelación", segmento:"Iluminación", proveedor:"Amazon", mes:"2026-07", fecha:"2026-07-22", total:4348.98, pagado:4348.98 },
   { concepto:"Letrero iluminación", categoria:"Remodelación", segmento:"Iluminación", proveedor:"Bragi", mes:"2026-07", fecha:"2026-07-24", total:11205, pagado:11205 },
   { concepto:"Vitrina", categoria:"Utensilio", segmento:"Vitrina", proveedor:"Marketplace", mes:"2026-07", fecha:"2026-07-25", total:15000, pagado:15000 },
-  { concepto:"Máquina", categoria:"Utensilio", segmento:"Máquina", proveedor:"Grupo Alpha", mes:"2026-07", fecha:"2026-07-25", total:114546, pagado:114546 },
+  { concepto:"Máquina", categoria:"Utensilio", segmento:"Máquina", proveedor:"Grupo Alpha", mes:"2026-07", fecha:"2026-07-25", total:114546.42, pagado:114546.42 },
   { concepto:"Congelador", categoria:"Utensilio", segmento:"Congelador", proveedor:"Best Buy", mes:"2026-07", fecha:"2026-07-25", total:2040, pagado:2040 },
   { concepto:"Refrigerador", categoria:"Utensilio", segmento:"Refrigerador", proveedor:"Mercado Libre", mes:"2026-07", fecha:"2026-07-25", total:4000, pagado:4000 },
-  { concepto:"Refrigerador 2", categoria:"Utensilio", segmento:"Refrigerador", proveedor:"The Home Deppot", mes:"2026-07", fecha:"2026-07-25", total:5500, pagado:5500 },
   { concepto:"Letrero iluminación 2", categoria:"Remodelación", segmento:"Iluminación 2", proveedor:"Bragi", mes:"2026-07", fecha:"2026-07-25", total:11205, pagado:11205 },
   { concepto:"Cámaras de seguridad", categoria:"Seguridad", segmento:"Cámaras", proveedor:"Cámara", mes:"2026-07", fecha:"2026-07-25", total:22450, pagado:22450 },
   { concepto:"Tapete 2", categoria:"Remodelación", segmento:"Tapete", proveedor:"Capital Industrial America", mes:"2026-07", fecha:"2026-07-25", total:1226.7, pagado:1226.7 },
   { concepto:"Amazon", categoria:"Utensilio", segmento:"Accesorios", proveedor:"Amazon", mes:"2026-07", fecha:"2026-07-25", total:24500, pagado:24500 },
   { concepto:"Baño", categoria:"Remodelación", segmento:"Baño", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-25", total:54150, pagado:54150 },
-  { concepto:"Cafetería restante", categoria:"Remodelación", segmento:"Cafetería restante", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-26", total:94170.6, pagado:94170.6 },
+  { concepto:"Cafetería restante", categoria:"Remodelación", segmento:"Cafetería restante", proveedor:"Arquitecto", mes:"2026-07", fecha:"2026-07-26", total:94170.55, pagado:94170.55 },
   { concepto:"Cojines", categoria:"Remodelación", segmento:"Cojines", proveedor:"Ikea", mes:"2026-07", fecha:"2026-07-27", total:1600, pagado:1600 },
   { concepto:"Bote de basura", categoria:"Remodelación", segmento:"Bote basura", proveedor:"The Home Deppot", mes:"2026-07", fecha:"2026-07-28", total:600, pagado:600 },
   { concepto:"Mes agosto", categoria:"Renta", segmento:"Renta", proveedor:"Sin tienda", mes:"2026-07", fecha:"2026-07-29", total:20000, pagado:20000 },
   { concepto:"Gastos TDC", categoria:"Remodelación", segmento:"Diferentes gastos", proveedor:"Sin tienda", mes:"2026-07", fecha:"2026-07-30", total:10000, pagado:10000 },
+  { concepto:"Bocinas/ Amplificador", categoria:"Remodelación", segmento:"Efectivo", proveedor:"Ofertando On line", mes:"2026-08", fecha:"2026-08-01", total:2500, pagado:2500 },
+  { concepto:"Huawei Mad Pad", categoria:"Utensilio", segmento:"Efectivo", proveedor:"Ofertando On line", mes:"2026-08", fecha:"2026-08-22", total:3060, pagado:3060 },
+  { concepto:"Mobiliario para baño", categoria:"Remodelación", segmento:"Debito", proveedor:"Servicios Home Depot, S. de R.L. de C.V.", mes:"2026-08", fecha:"2026-08-24", total:675.01, pagado:675.01 },
+  { concepto:"Ajustes de luz", categoria:"Remodelación", segmento:"Debito", proveedor:"Productos Eléctricos de Tijuana, S.A. de C.V.", mes:"2026-08", fecha:"2026-08-25", total:300.62, pagado:300.62 },
+  { concepto:"Ajustes de luz", categoria:"Remodelación", segmento:"Debito", proveedor:"Productos Eléctricos de Tijuana, S.A. de C.V.", mes:"2026-08", fecha:"2026-08-25", total:497.24, pagado:497.24 },
+  { concepto:"Acesorios", categoria:"Remodelación", segmento:"Debito", proveedor:"Ross", mes:"2026-08", fecha:"2026-08-25", total:680.34, pagado:680.34 },
+  { concepto:"Articulos de limpieza", categoria:"Remodelación", segmento:"Debito", proveedor:"DD[s", mes:"2026-08", fecha:"2026-08-25", total:221, pagado:221 },
+  { concepto:"Inteructor", categoria:"Remodelación", segmento:"Debito", proveedor:"Home Depot Usa", mes:"2026-08", fecha:"2026-08-26", total:237.83, pagado:237.83 },
+  { concepto:"Inteructor", categoria:"Remodelación", segmento:"Debito", proveedor:"Home Depot Usa", mes:"2026-08", fecha:"2026-08-26", total:163.88, pagado:163.88 },
+  { concepto:"Ajustes de luz", categoria:"Remodelación", segmento:"Debito", proveedor:"Productos Eléctricos de Tijuana, S.A. de C.V.", mes:"2026-08", fecha:"2026-08-27", total:301.59, pagado:301.59 },
+  { concepto:"Cinnchos etc", categoria:"Remodelación", segmento:"Debito", proveedor:"Servicios Home Depot, S. de R.L. de C.V.", mes:"2026-08", fecha:"2026-08-27", total:360, pagado:360 },
+  { concepto:"Señalamientos", categoria:"Remodelación", segmento:"Debito", proveedor:"Office Depot de México, S.A. de C.V.", mes:"2026-08", fecha:"2026-08-27", total:203, pagado:203 },
+  { concepto:"Samnsug tab/Armario", categoria:"Utensilio", segmento:"Efectivo", proveedor:"Ofertando On line", mes:"2026-08", fecha:"2026-08-29", total:3230, pagado:3230 },
+  { concepto:"Swicht de luz", categoria:"Remodelación", segmento:"Efectivo", proveedor:"Kuroda Norte, S.A. de C.V.", mes:"2026-08", fecha:"2026-08-29", total:123.99, pagado:123.99 },
+  { concepto:"Brocha", categoria:"Remodelación", segmento:"Debito", proveedor:"Servicios Home Depot, S. de R.L. de C.V.", mes:"2026-08", fecha:"2026-08-29", total:33, pagado:33 },
 ];
 
 const MESES_NOMBRE = {"01":"Enero","02":"Febrero","03":"Marzo","04":"Abril","05":"Mayo","06":"Junio","07":"Julio","08":"Agosto","09":"Septiembre","10":"Octubre","11":"Noviembre","12":"Diciembre"};
