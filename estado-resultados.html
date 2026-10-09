@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MURH Hipódromo · Estado de resultados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --blue-deep:#14366B;
+    --blue-main:#215AB3;
+    --blue-soft:#4D7BC2;
+    --blue-pale:#E9EFF7;
+    --blue-lightest:#C8D6EC;
+    --cream:#F4F7FB;
+    --ink:#14366B;
+    --grey:#95A5BC;
+    --white:#FFFFFF;
+    --sidebar-w:250px;
+    --amber:#E9A23B;
+    --teal:#2A9D8F;
+    --coral:#E76F51;
+    --purple:#8E44AD;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Manrope',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    display:flex;
+    min-height:100vh;
+  }
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:var(--sidebar-w);
+    background:var(--blue-deep);
+    color:var(--white);
+    display:flex;
+    flex-direction:column;
+    padding:26px 18px;
+    position:fixed;
+    top:0;left:0;bottom:0;
+    overflow-y:auto;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:30px;
+    padding:0 6px;
+  }
+  .brand .badge{
+    width:38px;height:38px;
+    background:var(--blue-main);
+    border-radius:44% 56% 52% 48% / 50% 46% 54% 50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand .badge .murh-mark{width:22px;height:22px;display:block;}
+  .brand-text{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;line-height:1.1;}
+  .brand-text span{display:block;font-family:'Manrope',sans-serif;font-weight:600;font-size:10.5px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+  .menu-label{
+    font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);
+    text-transform:uppercase;letter-spacing:1.2px;
+    margin:10px 8px 10px;
+  }
+  .menu{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px;}
+  .menu li a, .menu li .disabled{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 12px;
+    border-radius:14px;
+    color:rgba(255,255,255,0.8);
+    text-decoration:none;
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .menu li a.active{
+    background:var(--blue-main);
+    color:var(--white);
+    box-shadow:0 6px 16px -6px rgba(33,90,179,0.7);
+  }
+  .menu li a:hover:not(.active){background:rgba(255,255,255,0.06); color:var(--white);}
+  .menu li .disabled{color:rgba(255,255,255,0.35); cursor:default;}
+  .menu li .tag{
+    margin-left:auto;
+    font-size:9.5px;font-weight:800;
+    background:rgba(255,255,255,0.08);
+    padding:3px 7px;border-radius:8px;
+    text-transform:uppercase;letter-spacing:0.4px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:0.55;}
+  .menu li a.active .dot{background:var(--white); opacity:1;}
+
+  .sidebar-foot{
+    margin-top:auto;
+    padding:14px 12px;
+    background:rgba(255,255,255,0.06);
+    border-radius:16px;
+    font-size:12.5px;
+  }
+  .sidebar-foot .who{font-weight:800;color:var(--white);}
+  .sidebar-foot a{color:rgba(255,255,255,0.75); text-decoration:none; font-weight:700; font-size:11.5px;}
+
+  /* ---------- MAIN ---------- */
+  main{
+    margin-left:var(--sidebar-w);
+    flex:1;
+    padding:32px 40px 60px;
+    max-width:1300px;
+  }
+  .topbar{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:22px;flex-wrap:wrap;gap:16px;
+  }
+  .topbar h1{
+    font-family:'Baloo 2',sans-serif;
+    font-size:30px;font-weight:800;color:var(--blue-deep);
+    margin:0 0 4px;
+  }
+  .topbar p{margin:0;color:var(--grey);font-weight:600;font-size:14px;}
+
+  /* barra de filtros (al inicio de la página) */
+  .filters-bar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:end;
+    gap:14px;
+    background:var(--white);
+    border-radius:22px;
+    padding:16px 20px;
+    margin-bottom:24px;
+    box-shadow:0 10px 26px -16px rgba(15,30,61,0.16);
+    position:sticky;top:10px;z-index:30;
+  }
+  .filter-field{display:flex;flex-direction:column;gap:6px;min-width:140px;flex:1;}
+  .filter-field label{
+    font-size:10.5px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.6px;
+  }
+  .filter-field select, .filter-field input{
+    padding:10px 13px;
+    border-radius:12px;
+    border:1.5px solid var(--blue-pale);
+    background:var(--cream);
+    font-family:'Manrope',sans-serif;
+    font-size:13px;font-weight:700;
+    color:var(--ink);
+    outline:none;
+  }
+  .filter-field select:focus, .filter-field input:focus{border-color:var(--blue-main);}
+  .filters-bar #clearFilters{flex:0 0 auto;height:41px;align-self:end;}
+  #clearFilters{
+    background:var(--blue-pale);color:var(--blue-main);border:none;
+    padding:9px 16px;border-radius:12px;font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:12.5px;cursor:pointer;
+  }
+  #clearFilters:hover{background:var(--blue-lightest);}
+  #exportExcel{
+    background:var(--teal);color:var(--white);border:none;
+    padding:9px 16px;border-radius:12px;font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:12.5px;cursor:pointer;flex:0 0 auto;height:41px;align-self:end;
+  }
+  #exportExcel:hover{background:#238577;}
+
+  /* KPI cards */
+  .kpi-section-label{
+    font-size:11.5px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.8px;
+    margin:0 0 10px 2px;
+  }
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:18px;
+    margin-bottom:14px;
+  }
+  .kpi-grid.secondary{margin-bottom:28px;}
+  .kpi{
+    background:var(--white);
+    border-radius:26px 30px 26px 30px / 30px 26px 30px 26px;
+    padding:18px 20px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 26px -14px rgba(15,30,61,0.18);
+  }
+  .kpi::after{
+    content:"";
+    position:absolute;
+    width:90px;height:90px;
+    border-radius:50%;
+    top:-30px;right:-30px;
+    opacity:0.10;
+    background:var(--blue-main);
+  }
+  .kpi:nth-child(2)::after{background:var(--amber);}
+  .kpi:nth-child(3)::after{background:var(--teal);}
+  .kpi:nth-child(4)::after{background:var(--purple);}
+  .kpi:nth-child(2) .val{color:#B9791F;}
+  .kpi:nth-child(3) .val{color:var(--teal);}
+  .kpi:nth-child(4) .val{color:var(--purple);}
+  .kpi .lbl{font-size:11px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;}
+  .kpi .val{font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--blue-deep);}
+  .kpi .sub{font-size:11.5px;font-weight:600;color:var(--grey);margin-top:4px;}
+
+  /* charts row */
+  .charts-row{
+    display:grid;
+    grid-template-columns:1.15fr 1fr;
+    gap:18px;
+    margin-bottom:18px;
+  }
+  .panel{
+    background:var(--white);
+    border-radius:26px;
+    padding:22px 24px;
+    box-shadow:0 10px 26px -14px rgba(15,30,61,0.14);
+  }
+  .panel h3{
+    font-family:'Baloo 2',sans-serif;
+    font-size:17px;font-weight:700;color:var(--blue-deep);
+    margin:0 0 14px;
+  }
+  .chart-box{position:relative; height:260px;}
+  .chart-box.tall{height:320px;}
+
+  /* table */
+  .table-panel{background:var(--white);border-radius:26px;padding:22px 24px;box-shadow:0 10px 26px -14px rgba(15,30,61,0.14);}
+  .table-head-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:10px;}
+  .table-scroll{overflow-x:auto; max-height:520px; overflow-y:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px;}
+  thead th{
+    position:sticky; top:0; z-index:1;
+    text-align:left;
+    font-size:11px;font-weight:800;color:var(--grey);
+    text-transform:uppercase;letter-spacing:0.5px;
+    padding:0 10px 10px;
+    border-bottom:2px solid var(--blue-pale);
+    background:var(--white);
+  }
+  tbody td{padding:11px 10px;border-bottom:1px solid var(--blue-pale);font-weight:600;color:var(--ink);}
+  tbody tr:hover{background:var(--cream);}
+  tfoot .totals-row td{
+    padding:13px 10px;
+    font-weight:800;
+    color:var(--white);
+    background:var(--blue-deep);
+    border-bottom:none;
+    position:sticky; bottom:0;
+  }
+  tfoot .totals-row td:first-child{border-radius:0 0 0 14px; text-transform:uppercase; font-size:11.5px; letter-spacing:0.6px;}
+  tfoot .totals-row td:last-child{border-radius:0 0 14px 0;}
+  tfoot .totals-row td.num{color:var(--white);}
+  .cat-pill{
+    display:inline-block;padding:4px 10px;border-radius:9px;
+    font-size:11px;font-weight:800;background:var(--blue-pale);color:var(--blue-main);
+  }
+  .num{font-family:'Manrope',sans-serif;font-weight:800;color:var(--blue-deep);}
+  .no-rows{padding:26px 10px;text-align:center;color:var(--grey);font-weight:600;font-size:13px;}
+
+  @media (max-width:1050px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .charts-row{grid-template-columns:1fr;}
+  }
+  @media (max-width:760px){
+    .sidebar{position:relative;width:100%;height:auto;}
+    main{margin-left:0;padding:24px 18px 50px;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+  }
+  table.er{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px;}
+  table.er th{text-align:left;font-size:11px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:.5px;padding:0 12px 10px;border-bottom:2px solid var(--blue-pale);}
+  table.er th.r{text-align:right;}
+  table.er td{padding:9px 12px;border-bottom:1px solid var(--blue-pale);font-weight:600;color:var(--ink);}
+  table.er td.num{text-align:right;font-variant-numeric:tabular-nums;} table.er td.pc{color:var(--grey);}
+  table.er td.neg{color:#D62839;}
+  table.er tr.sec td{background:var(--blue-pale);font-size:11px;font-weight:800;color:var(--blue-main);text-transform:uppercase;letter-spacing:.8px;padding:8px 12px;}
+  table.er tr.sub td:first-child{padding-left:30px;font-weight:600;}
+  table.er tr.tot td{font-weight:800;border-top:1.5px solid var(--blue-lightest);}
+  table.er tr.res td{font-weight:800;background:#F4F7FB;color:var(--blue-deep);}
+  table.er tr.final td{background:var(--blue-deep);color:#fff;border-bottom:none;font-size:14.5px;}
+  table.er tr.final td.neg{color:#FFB4A8;} table.er tr.final td.pc{color:rgba(255,255,255,.7);}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="badge">
+      <svg viewBox="0 0 447 447" xmlns="http://www.w3.org/2000/svg" class="murh-mark"><g transform="translate(0.000000,447.000000) scale(0.100000,-0.100000)" fill="#ffffff" stroke="none"><path d="M0 2235 l0 -2235 2235 0 2235 0 0 2235 0 2235 -2235 0 -2235 0 0
+-2235z m2077 1149 c120 -57 196 -221 164 -351 -7 -26 -34 -95 -61 -153 -64
+-139 -75 -216 -55 -370 16 -123 11 -169 -24 -218 -47 -67 -177 -58 -239 17
+-33 39 -62 118 -62 166 0 76 14 114 111 316 75 154 91 195 91 234 0 60 -22 85
+-73 85 -32 0 -40 -5 -57 -32 -11 -18 -22 -46 -26 -61 -4 -16 -18 -40 -32 -54
+-27 -27 -46 -27 -118 0 -69 26 -112 -4 -130 -89 -8 -35 8 -90 60 -206 57 -126
+56 -254 -1 -384 -90 -204 -303 -226 -356 -37 -14 50 -9 72 65 278 54 151 49
+239 -23 390 -44 92 -61 145 -61 196 0 97 71 216 147 245 102 39 221 -31 254
+-149 15 -55 37 -45 77 33 47 92 57 105 97 136 66 50 156 53 252 8z m480 -25
+c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
+-16 -60 35 -121 76 -90 9 6 25 52 36 106 27 126 57 186 128 249 121 109 135
+125 163 185 16 33 33 86 39 116 13 70 28 98 62 116 61 31 168 2 212 -59 30
+-41 33 -145 7 -219 -43 -123 -118 -203 -300 -321 -85 -55 -105 -94 -130 -255
+-22 -137 -47 -201 -95 -236 -75 -57 -186 -61 -259 -10 -53 38 -111 136 -134
+228 -23 94 -8 193 46 319 53 124 61 156 61 267 0 189 51 284 170 321 37 11 73
+10 107 -2z m505 -649 c27 -33 23 -48 -27 -94 -42 -38 -47 -47 -55 -109 -13
+-92 -32 -132 -70 -152 -62 -32 -121 4 -139 84 -17 77 18 200 72 249 59 55 182
+67 219 22z m118 -115 c44 -40 44 -163 1 -258 -31 -66 -84 -100 -166 -105 -58
+-4 -66 -2 -89 21 -31 31 -33 51 -7 75 10 9 31 28 45 41 14 13 28 33 30 45 27
+152 39 179 86 202 26 14 73 3 100 -21z m-1303 -359 c32 -20 63 -78 63 -115 0
+-35 -30 -90 -62 -114 -18 -13 -60 -34 -92 -47 -59 -24 -135 -75 -168 -114 -10
+-12 -23 -37 -29 -57 -10 -31 -7 -46 21 -125 86 -241 104 -351 75 -449 -48
+-167 -247 -206 -329 -65 -29 49 -27 180 3 324 37 172 26 234 -64 360 -42 57
+-45 99 -14 164 46 94 127 106 225 32 30 -23 61 -39 68 -37 8 3 16 25 20 49 15
+97 88 199 154 214 15 3 32 7 37 9 19 6 60 -7 92 -29z m965 14 c45 -13 85 -58
+94 -107 10 -54 -32 -128 -120 -210 -39 -36 -79 -77 -88 -92 -35 -52 -13 -139
+31 -127 60 17 138 27 169 21 79 -15 148 -74 178 -151 17 -46 17 -48 -7 -118
+-30 -87 -30 -162 0 -230 27 -62 21 -98 -23 -131 -106 -81 -260 -71 -316 20
+-52 85 -48 143 16 209 30 32 44 55 44 74 0 70 -83 136 -141 112 -31 -13 -75
+-71 -95 -127 -7 -21 -13 -79 -14 -130 0 -103 -11 -138 -51 -159 -35 -18 -120
+-18 -162 0 -44 18 -95 78 -103 122 -10 56 3 157 28 216 12 29 53 91 91 138 93
+116 132 198 162 345 27 129 40 163 93 238 33 46 68 71 122 88 35 10 50 10 92
+-1z m-528 -140 c151 -93 140 -244 -31 -432 -107 -118 -136 -191 -113 -293 34
+-157 20 -201 -82 -255 -80 -43 -153 -13 -201 80 -23 44 -27 64 -23 97 8 60 40
+150 102 288 61 135 65 169 34 260 -24 70 -25 113 -5 163 21 49 51 80 100 104
+54 25 169 19 219 -12z"/></g></svg>
+    </div>
+    <div class="brand-text">MURH<span>Hipódromo · Panel</span></div>
+  </div>
+
+  <div class="menu-label">Módulos financieros</div>
+  <ul class="menu">
+    <li><a href="inversion.html"><span class="dot"></span> Inversión</a></li>
+    <li><a href="ventas.html"><span class="dot"></span> Ventas</a></li>
+    <li><a href="ventas-ubereats.html"><span class="dot"></span> Ventas Uber Eats</a></li>
+    <li><a href="gastos-operativos.html"><span class="dot"></span> Gastos operativos</a></li>
+    <li><a class="active" href="estado-resultados.html"><span class="dot"></span> Estado de resultados</a></li>
+  </ul>
+
+  <div class="sidebar-foot">
+    <div class="who" id="whoami">Hola</div>
+    <a href="index.html?salir=1">Cerrar sesión</a>
+  </div>
+</aside>
+<main>
+  <div class="topbar">
+    <div>
+      <h1>Estado de resultados</h1>
+      <p>Ventas de cafetería y Uber Eats contra costo de ventas, gastos operativos y nómina</p>
+    </div>
+  </div>
+
+  <div class="filters-bar">
+    <div class="filter-field"><label for="fMes">Mes</label><select id="fMes"></select></div>
+    <div class="filter-field"><label for="fIva">IVA</label>
+      <select id="fIva"><option value="total">Total (con IVA)</option><option value="16">Sin IVA 16%</option><option value="8">Sin IVA 8%</option></select></div>
+    <div class="filter-field"><label for="fUber">Comisión Uber Eats (%)</label><input type="number" id="fUber" value="0" min="0" max="100" step="0.5"></div>
+    <button id="clearFilters" type="button">Limpiar filtros</button>
+    <button id="exportExcel" type="button">⬇ Exportar a Excel</button>
+  </div>
+
+  <p class="kpi-section-label">Resultado del periodo</p>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="lbl">Ingresos netos</div><div class="val" id="kIng">—</div><div class="sub" id="kIngSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Utilidad bruta</div><div class="val" id="kBru">—</div><div class="sub" id="kBruSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Utilidad operativa</div><div class="val" id="kOpe">—</div><div class="sub" id="kOpeSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Utilidad neta</div><div class="val" id="kNet">—</div><div class="sub" id="kNetSub">&nbsp;</div></div>
+  </div>
+  <div class="kpi-grid secondary">
+    <div class="kpi"><div class="lbl">Costo de ventas</div><div class="val" id="kCv">—</div><div class="sub" id="kCvSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Nómina</div><div class="val" id="kNom">—</div><div class="sub" id="kNomSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Renta</div><div class="val" id="kRen">—</div><div class="sub" id="kRenSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Inversión recuperada</div><div class="val" id="kRec">—</div><div class="sub" id="kRecSub">&nbsp;</div></div>
+  </div>
+
+  <div class="table-panel">
+    <div class="table-head-row"><h3>Estado de resultados</h3></div>
+    <div class="table-scroll" style="max-height:none;"><table class="er" id="erTable"></table></div>
+  </div>
+
+  <div style="height:18px"></div>
+  <div class="charts-row">
+    <div class="panel"><h3>Ingresos, costos y utilidad por mes</h3><div class="chart-box tall"><canvas id="mesChart"></canvas></div></div>
+    <div class="panel"><h3>A dónde se va cada peso de venta</h3><div class="chart-box tall"><canvas id="pesoChart"></canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="panel"><h3>Ingresos vs. egresos por semana</h3><div class="chart-box tall"><canvas id="semChart"></canvas></div></div>
+    <div class="panel"><h3>Gastos operativos por concepto</h3><div class="chart-box tall"><canvas id="opexChart"></canvas></div></div>
+  </div>
+
+  <p style="font-size:12px;font-weight:600;color:var(--grey);margin:14px 4px 30px;line-height:1.5;">
+    Cómo se arma: <b>ingresos</b> = ventas del POS (efectivo + tarjeta) + ventas de Uber Eats. <b>Costo de ventas</b> = compras de Insumos, Leches, Jarabes, Postres, Mercancías y Desechables. <b>Gastos operativos</b> = nómina y todo lo demás (renta, mantenimiento, fumigación, permisos, papelería, general, etc.). La <b>comisión bancaria</b> es la del POS. Todo se registra cuando se paga (no hay inventario): las compras de agosto incluyen el surtido inicial. Uber Eats entra al total vendido; su comisión y retenciones no vienen en tus archivos, por eso la casilla de comisión (%) arranca en 0. Se asume que las ventas de Uber Eats no están dentro del POS. Con "Sin IVA", las ventas se dividen entre 1.16 o 1.08 y las compras usan su subtotal sin impuesto; la comisión bancaria no cambia. La nómina cuenta en el mes del periodo trabajado. La inversión inicial no es gasto: se compara contra la utilidad en "Inversión recuperada".
+  </p>
+</main>
+
+<script>
+const ING = [{"f": "2026-08-23", "efectivo": 4290, "tarjeta": 10405, "comision": 422.62}, {"f": "2026-08-24", "efectivo": 1340, "tarjeta": 1230, "comision": 49.98}, {"f": "2026-08-25", "efectivo": 1280, "tarjeta": 3465, "comision": 140.72}, {"f": "2026-08-26", "efectivo": 1370, "tarjeta": 2335, "comision": 94.83}, {"f": "2026-08-27", "efectivo": 2810, "tarjeta": 1645, "comision": 66.85}, {"f": "2026-08-28", "efectivo": 2315.05, "tarjeta": 2550, "comision": 103.62}, {"f": "2026-08-29", "efectivo": 1165, "tarjeta": 1635, "comision": 66.43}, {"f": "2026-08-30", "efectivo": 1665, "tarjeta": 1780, "comision": 72.28}, {"f": "2026-08-31", "efectivo": 840, "tarjeta": 1220, "comision": 49.55}, {"f": "2026-09-01", "efectivo": 1185, "tarjeta": 890, "comision": 36.15}, {"f": "2026-09-02", "efectivo": 935, "tarjeta": 1965, "comision": 79.83}, {"f": "2026-09-03", "efectivo": 1975, "tarjeta": 1790, "comision": 72.71}, {"f": "2026-09-04", "efectivo": 1915, "tarjeta": 1825, "comision": 74.14}, {"f": "2026-09-05", "efectivo": 195, "tarjeta": 2385, "comision": 96.87}, {"f": "2026-09-06", "efectivo": 2270, "tarjeta": 3505, "comision": 142.39}, {"f": "2026-09-07", "efectivo": 2935, "tarjeta": 1520, "comision": 61.75}, {"f": "2026-09-08", "efectivo": 1423, "tarjeta": 1700, "comision": 69.05}, {"f": "2026-09-09", "efectivo": 1365, "tarjeta": 3085, "comision": 125.31}, {"f": "2026-09-10", "efectivo": 2435, "tarjeta": 2882, "comision": 117.08}, {"f": "2026-09-11", "efectivo": 815, "tarjeta": 2590, "comision": 105.21}, {"f": "2026-09-12", "efectivo": 1030, "tarjeta": 3560, "comision": 144.62}, {"f": "2026-09-13", "efectivo": 1955, "tarjeta": 1537.51, "comision": 62.48}, {"f": "2026-09-14", "efectivo": 1750, "tarjeta": 1860, "comision": 75.54}, {"f": "2026-09-15", "efectivo": 1090, "tarjeta": 2675, "comision": 108.64}, {"f": "2026-09-16", "efectivo": 1045, "tarjeta": 3615.01, "comision": 146.84}, {"f": "2026-09-17", "efectivo": 1276.5, "tarjeta": 2013.75, "comision": 81.79}, {"f": "2026-09-18", "efectivo": 2510, "tarjeta": 2271.5, "comision": 92.28}, {"f": "2026-09-19", "efectivo": 1615, "tarjeta": 3130, "comision": 127.14}, {"f": "2026-09-20", "efectivo": 1165, "tarjeta": 1448.75, "comision": 58.83}, {"f": "2026-09-21", "efectivo": 740, "tarjeta": 2682, "comision": 108.94}, {"f": "2026-09-22", "efectivo": 2350, "tarjeta": 2327.25, "comision": 94.54}, {"f": "2026-09-23", "efectivo": 3009, "tarjeta": 3106.5, "comision": 126.19}, {"f": "2026-09-24", "efectivo": 1865, "tarjeta": 2595.5, "comision": 105.41}, {"f": "2026-09-25", "efectivo": 580, "tarjeta": 1840, "comision": 74.77}, {"f": "2026-09-26", "efectivo": 1665, "tarjeta": 2414.5, "comision": 98.06}, {"f": "2026-09-27", "efectivo": 1070, "tarjeta": 2663.75, "comision": 108.75}, {"f": "2026-09-28", "efectivo": 1195.1, "tarjeta": 960, "comision": 39}, {"f": "2026-09-29", "efectivo": 1680, "tarjeta": 1620, "comision": 65.84}, {"f": "2026-09-30", "efectivo": 1115, "tarjeta": 1015, "comision": 41.22}];
+const UBER = [{"f": "2026-09-04", "m": 395}, {"f": "2026-09-05", "m": 145}, {"f": "2026-09-07", "m": 920}, {"f": "2026-09-08", "m": 1350}, {"f": "2026-09-09", "m": 1325}, {"f": "2026-09-10", "m": 2370}, {"f": "2026-09-11", "m": 3270}, {"f": "2026-09-12", "m": 1135}, {"f": "2026-09-13", "m": 545}, {"f": "2026-09-14", "m": 915}, {"f": "2026-09-15", "m": 3435}, {"f": "2026-09-16", "m": 3150}, {"f": "2026-09-17", "m": 2495}, {"f": "2026-09-18", "m": 2455}, {"f": "2026-09-19", "m": 510}, {"f": "2026-09-20", "m": 1840}, {"f": "2026-09-21", "m": 2310}, {"f": "2026-09-22", "m": 2250}, {"f": "2026-09-23", "m": 2615}, {"f": "2026-09-24", "m": 1340}, {"f": "2026-09-25", "m": 2135}, {"f": "2026-09-26", "m": 2040}, {"f": "2026-09-27", "m": 940}, {"f": "2026-09-28", "m": 895}, {"f": "2026-09-29", "m": 1925}, {"f": "2026-09-30", "m": 1775}];
+const GAS = [{"f": "2026-08-21", "m": "2026-08", "c": "Postres", "s": 630, "n": 630}, {"f": "2026-08-21", "m": "2026-08", "c": "Fumigación", "s": 1200, "n": 1296}, {"f": "2026-08-21", "m": "2026-08", "c": "Desechables", "s": 4334.07, "n": 4680.8}, {"f": "2026-08-21", "m": "2026-08", "c": "Jarabes", "s": 2200, "n": 2200}, {"f": "2026-08-22", "m": "2026-08", "c": "Leches", "s": 1137.39, "n": 1137.39}, {"f": "2026-08-23", "m": "2026-08", "c": "Insumos", "s": 6278.19, "n": 6278.19}, {"f": "2026-08-23", "m": "2026-08", "c": "Nómina", "s": 700, "n": 700}, {"f": "2026-08-23", "m": "2026-08", "c": "Nómina", "s": 600, "n": 600}, {"f": "2026-08-23", "m": "2026-08", "c": "Nómina", "s": 600, "n": 600}, {"f": "2026-08-24", "m": "2026-08", "c": "Insumos", "s": 2350.8, "n": 2350.8}, {"f": "2026-08-25", "m": "2026-08", "c": "Mercancías", "s": 461.9, "n": 461.9}, {"f": "2026-08-25", "m": "2026-08", "c": "Insumos", "s": 5690, "n": 5690}, {"f": "2026-08-26", "m": "2026-08", "c": "Mercancías", "s": 55.9, "n": 55.9}, {"f": "2026-08-26", "m": "2026-08", "c": "Mercancías", "s": 111.8, "n": 111.8}, {"f": "2026-08-26", "m": "2026-08", "c": "Insumos", "s": 3660.31, "n": 3660.31}, {"f": "2026-08-27", "m": "2026-08", "c": "Mercancías", "s": 188, "n": 188}, {"f": "2026-08-27", "m": "2026-08", "c": "Insumos", "s": 1440, "n": 1440}, {"f": "2026-08-28", "m": "2026-08", "c": "Postres", "s": 1222, "n": 1222}, {"f": "2026-08-28", "m": "2026-08", "c": "Jarabes", "s": 220, "n": 220}, {"f": "2026-08-28", "m": "2026-08", "c": "Insumos", "s": 844.11, "n": 844.11}, {"f": "2026-08-28", "m": "2026-08", "c": "Insumos", "s": 1375, "n": 1375}, {"f": "2026-08-28", "m": "2026-08", "c": "Nómina", "s": 800, "n": 800}, {"f": "2026-08-28", "m": "2026-08", "c": "Nómina", "s": 1500, "n": 1500}, {"f": "2026-08-28", "m": "2026-08", "c": "Nómina", "s": 1000, "n": 1000}, {"f": "2026-08-29", "m": "2026-08", "c": "Mercancías", "s": 227.04, "n": 227.04}, {"f": "2026-08-29", "m": "2026-08", "c": "Mantenimiento", "s": 1800, "n": 1800}, {"f": "2026-08-29", "m": "2026-08", "c": "Insumos", "s": 202.6, "n": 202.6}, {"f": "2026-08-30", "m": "2026-08", "c": "Postres", "s": 1320, "n": 1320}, {"f": "2026-08-30", "m": "2026-08", "c": "Insumos", "s": 139.5, "n": 139.5}, {"f": "2026-08-31", "m": "2026-08", "c": "Mercancías", "s": 1651.02, "n": 1651.02}, {"f": "2026-09-01", "m": "2026-09", "c": "Postres", "s": 600, "n": 600}, {"f": "2026-09-01", "m": "2026-09", "c": "Contenedores", "s": 330.82, "n": 330.82}, {"f": "2026-09-01", "m": "2026-09", "c": "Insumos", "s": 5390, "n": 5390}, {"f": "2026-09-02", "m": "2026-09", "c": "Permisos", "s": 550, "n": 550}, {"f": "2026-09-02", "m": "2026-09", "c": "Jarabes", "s": 600, "n": 600}, {"f": "2026-09-03", "m": "2026-09", "c": "Insumos", "s": 651.19, "n": 651.19}, {"f": "2026-09-03", "m": "2026-09", "c": "Papelería", "s": 111.6, "n": 111.6}, {"f": "2026-09-04", "m": "2026-09", "c": "Postres", "s": 752, "n": 752}, {"f": "2026-09-04", "m": "2026-09", "c": "Insumos", "s": 329.42, "n": 329.42}, {"f": "2026-09-04", "m": "2026-09", "c": "Nómina", "s": 3200, "n": 3200}, {"f": "2026-09-04", "m": "2026-09", "c": "Nómina", "s": 2400, "n": 2400}, {"f": "2026-09-04", "m": "2026-09", "c": "Nómina", "s": 1000, "n": 1000}, {"f": "2026-09-07", "m": "2026-09", "c": "Insumos", "s": 1498.34, "n": 1498.34}, {"f": "2026-09-07", "m": "2026-09", "c": "Insumos", "s": 4170, "n": 4170}, {"f": "2026-09-07", "m": "2026-09", "c": "Decoración", "s": 350, "n": 350}, {"f": "2026-09-08", "m": "2026-09", "c": "Jarabes", "s": 800, "n": 800}, {"f": "2026-09-08", "m": "2026-09", "c": "Insumos", "s": 555.57, "n": 555.57}, {"f": "2026-09-08", "m": "2026-09", "c": "General", "s": 599, "n": 599}, {"f": "2026-09-09", "m": "2026-09", "c": "Postres", "s": 1500, "n": 1500}, {"f": "2026-09-09", "m": "2026-09", "c": "Leches", "s": 830.7, "n": 830.7}, {"f": "2026-09-09", "m": "2026-09", "c": "Insumos", "s": 880, "n": 880}, {"f": "2026-09-10", "m": "2026-09", "c": "Promo Uber", "s": 300, "n": 300}, {"f": "2026-09-11", "m": "2026-09", "c": "Insumos", "s": 100, "n": 100}, {"f": "2026-09-11", "m": "2026-09", "c": "Insumos", "s": 1123.4, "n": 1123.4}, {"f": "2026-09-11", "m": "2026-09", "c": "Insumos", "s": 287.15, "n": 287.15}, {"f": "2026-09-11", "m": "2026-09", "c": "Insumos", "s": 156, "n": 156}, {"f": "2026-09-11", "m": "2026-09", "c": "Insumos", "s": 240, "n": 240}, {"f": "2026-09-11", "m": "2026-09", "c": "Insumos", "s": 1674, "n": 1674}, {"f": "2026-09-11", "m": "2026-09", "c": "Insumos", "s": 28, "n": 28}, {"f": "2026-09-11", "m": "2026-09", "c": "Nómina", "s": 2400, "n": 2400}, {"f": "2026-09-11", "m": "2026-09", "c": "Nómina", "s": 3200, "n": 3200}, {"f": "2026-09-11", "m": "2026-09", "c": "Nómina", "s": 1000, "n": 1000}, {"f": "2026-09-12", "m": "2026-09", "c": "Insumos", "s": 1320, "n": 1320}, {"f": "2026-09-12", "m": "2026-09", "c": "Insumos", "s": 427.8, "n": 427.8}, {"f": "2026-09-12", "m": "2026-09", "c": "Insumos", "s": 119.8, "n": 119.8}, {"f": "2026-09-12", "m": "2026-09", "c": "Insumos", "s": 586, "n": 586}, {"f": "2026-09-14", "m": "2026-09", "c": "Insumos", "s": 288.37, "n": 288.37}, {"f": "2026-09-14", "m": "2026-09", "c": "Insumos", "s": 304, "n": 304}, {"f": "2026-09-14", "m": "2026-09", "c": "Insumos", "s": 1316, "n": 1316}, {"f": "2026-09-14", "m": "2026-09", "c": "Insumos", "s": 630, "n": 630}, {"f": "2026-09-15", "m": "2026-09", "c": "Renta", "s": 20000, "n": 20000}, {"f": "2026-09-15", "m": "2026-09", "c": "Insumos", "s": 80, "n": 80}, {"f": "2026-09-15", "m": "2026-09", "c": "Insumos", "s": 1458, "n": 1458}, {"f": "2026-09-16", "m": "2026-09", "c": "Insumos", "s": 668, "n": 668}, {"f": "2026-09-16", "m": "2026-09", "c": "Insumos", "s": 563.7, "n": 563.7}, {"f": "2026-09-16", "m": "2026-09", "c": "General", "s": 240, "n": 240}, {"f": "2026-09-16", "m": "2026-09", "c": "General", "s": 350, "n": 350}, {"f": "2026-09-16", "m": "2026-09", "c": "Nómina", "s": 1500, "n": 1500}, {"f": "2026-09-17", "m": "2026-09", "c": "Insumos", "s": 327.6, "n": 327.6}, {"f": "2026-09-18", "m": "2026-09", "c": "Insumos", "s": 1360, "n": 1360}, {"f": "2026-09-18", "m": "2026-09", "c": "Insumos", "s": 468, "n": 468}, {"f": "2026-09-18", "m": "2026-09", "c": "Insumos", "s": 1674, "n": 1674}, {"f": "2026-09-18", "m": "2026-09", "c": "Insumos", "s": 86, "n": 86}, {"f": "2026-09-18", "m": "2026-09", "c": "Insumos", "s": 27.36, "n": 27.36}, {"f": "2026-09-18", "m": "2026-09", "c": "Insumos", "s": 1034, "n": 1034}, {"f": "2026-09-19", "m": "2026-09", "c": "Insumos", "s": 600, "n": 600}, {"f": "2026-09-20", "m": "2026-09", "c": "Insumos", "s": 1340, "n": 1340}, {"f": "2026-09-20", "m": "2026-09", "c": "Nómina", "s": 2200, "n": 2200}, {"f": "2026-09-20", "m": "2026-09", "c": "Nómina", "s": 2000, "n": 2000}, {"f": "2026-09-21", "m": "2026-09", "c": "Insumos", "s": 503.33, "n": 503.33}, {"f": "2026-09-22", "m": "2026-09", "c": "General", "s": 205, "n": 205}, {"f": "2026-09-22", "m": "2026-09", "c": "Insumos", "s": 635, "n": 635}, {"f": "2026-09-23", "m": "2026-09", "c": "General", "s": 83.5, "n": 83.5}, {"f": "2026-09-23", "m": "2026-09", "c": "Insumos", "s": 1131, "n": 1131}, {"f": "2026-09-24", "m": "2026-09", "c": "Insumos", "s": 1249.39, "n": 1249.39}, {"f": "2026-09-24", "m": "2026-09", "c": "General", "s": 1985, "n": 1985}, {"f": "2026-09-24", "m": "2026-09", "c": "General", "s": 718.2, "n": 718.2}, {"f": "2026-09-24", "m": "2026-09", "c": "Insumos", "s": 2140, "n": 2140}, {"f": "2026-09-24", "m": "2026-09", "c": "General", "s": 350, "n": 350}, {"f": "2026-09-24", "m": "2026-09", "c": "General", "s": 450, "n": 450}, {"f": "2026-09-24", "m": "2026-09", "c": "General", "s": 1450, "n": 1450}, {"f": "2026-09-25", "m": "2026-09", "c": "Insumos", "s": 658, "n": 658}, {"f": "2026-09-25", "m": "2026-09", "c": "Insumos", "s": 2008, "n": 2008}, {"f": "2026-09-25", "m": "2026-09", "c": "Insumos", "s": 1700, "n": 1700}, {"f": "2026-09-25", "m": "2026-09", "c": "Insumos", "s": 158, "n": 158}, {"f": "2026-09-25", "m": "2026-09", "c": "Insumos", "s": 411.93, "n": 411.93}, {"f": "2026-09-25", "m": "2026-09", "c": "Nómina", "s": 2000, "n": 2000}, {"f": "2026-09-25", "m": "2026-09", "c": "Nómina", "s": 3200, "n": 3200}, {"f": "2026-09-28", "m": "2026-09", "c": "Insumos", "s": 5390, "n": 5390}, {"f": "2026-09-29", "m": "2026-09", "c": "Insumos", "s": 11.97, "n": 11.97}, {"f": "2026-09-29", "m": "2026-09", "c": "Insumos", "s": 1804.4, "n": 1804.4}, {"f": "2026-09-29", "m": "2026-09", "c": "Insumos", "s": 752, "n": 752}, {"f": "2026-09-29", "m": "2026-09", "c": "Insumos", "s": 540, "n": 540}, {"f": "2026-09-29", "m": "2026-09", "c": "Insumos", "s": 1320, "n": 1320}, {"f": "2026-10-02", "m": "2026-09", "c": "Nómina", "s": 2000, "n": 2000}, {"f": "2026-10-02", "m": "2026-09", "c": "Nómina", "s": 3200, "n": 3200}, {"f": "2026-10-02", "m": "2026-08", "c": "Nómina", "s": 500, "n": 500}];
+const INVERSION_TOTAL = 661894.96;
+
+const params = new URLSearchParams(window.location.search);
+document.getElementById('whoami').textContent = "Hola, " + (params.get('user') || 'Usuario');
+
+const el = id => document.getElementById(id);
+const fmtMoney = n => "$" + Math.round(n).toLocaleString("es-MX");
+const fmtNeg = n => n < 0 ? '(' + fmtMoney(-n) + ')' : fmtMoney(n);
+const moneyLabel = v => { const a=Math.abs(v), t=a>=1000 ? '$'+(a/1000).toFixed(1)+'k' : '$'+Math.round(a).toLocaleString('es-MX'); return v<0 ? '('+t+')' : t; };
+const kTick = v => '$'+(v/1000).toFixed(0)+'k';
+const pct = (a,b) => b ? (a/b*100).toFixed(1)+'%' : '—';
+const MESES={'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+const mesNombre = m => MESES[m.slice(5)] + ' ' + m.slice(0,4);
+const COSTO_VENTAS = ['Insumos','Leches','Jarabes','Postres','Mercancías','Desechables'];
+const FONT={family:'Manrope',weight:800,size:11};
+const CHART_PALETTE=['#215AB3','#E76F51','#2A9D8F','#E9A23B','#8E44AD','#4D7BC2','#D62839','#588157','#B5838D','#457B9D'];
+if (typeof ChartDataLabels !== 'undefined') { Chart.register(ChartDataLabels); }
+const charts={}; const mk=(id,cfg)=>{ if(charts[id]) charts[id].destroy(); charts[id]=new Chart(el(id),cfg); };
+
+const MONTHS=[...new Set([...ING.map(i=>i.f.slice(0,7)),...UBER.map(u=>u.f.slice(0,7)),...GAS.map(g=>g.m)])].sort();
+el('fMes').innerHTML='<option value="all">Todos</option>'+MONTHS.map(m=>`<option value="${m}">${mesNombre(m)}</option>`).join('');
+
+function calc(months){
+  const div = el('fIva').value==='16'?1.16:(el('fIva').value==='8'?1.08:1);
+  const sin = el('fIva').value!=='total';
+  const uberPct = Math.max(0,parseFloat(el('fUber').value)||0)/100;
+  const inM = m => months.includes(m);
+  const pos = ING.filter(i=>inM(i.f.slice(0,7))).reduce((s,i)=>s+(i.efectivo||0)+(i.tarjeta||0),0)/div;
+  const comPos = ING.filter(i=>inM(i.f.slice(0,7))).reduce((s,i)=>s+(i.comision||0),0);
+  const uber = UBER.filter(u=>inM(u.f.slice(0,7))).reduce((s,u)=>s+u.m,0)/div;
+  const uberCom = uber*uberPct;
+  const ingresos = pos+uber-uberCom;
+  const gas = GAS.filter(g=>inM(g.m)).map(g=>({c:g.c,a:sin?g.s:g.n}));
+  const costo={}, opex={};
+  gas.forEach(g=>{ const t=COSTO_VENTAS.includes(g.c)?costo:opex; t[g.c]=(t[g.c]||0)+g.a; });
+  const sum=o=>Object.values(o).reduce((a,b)=>a+b,0);
+  const costoTot=sum(costo), opexTot=sum(opex);
+  const bruta=ingresos-costoTot, operativa=bruta-opexTot, neta=operativa-comPos;
+  return {pos,uber,uberCom,ingresos,costo,costoTot,bruta,opex,opexTot,operativa,comPos,neta};
+}
+
+function render(){
+  const sel=el('fMes').value;
+  const months = sel==='all'?MONTHS:[sel];
+  const per = months.map(m=>calc([m]));
+  const tot = calc(months);
+  const cols = months.length>1 ? [...months.map((m,i)=>({t:mesNombre(m),d:per[i]})),{t:'Total',d:tot}] : [{t:'Total',d:tot}];
+
+  // KPIs
+  const set=(id,v,s)=>{el(id).textContent=v; if(s!==undefined) el(id+'Sub').textContent=s;};
+  set('kIng',fmtMoney(tot.ingresos),'POS '+fmtMoney(tot.pos)+' · Uber '+fmtMoney(tot.uber-tot.uberCom));
+  set('kBru',fmtNeg(tot.bruta),pct(tot.bruta,tot.ingresos)+' de los ingresos');
+  set('kOpe',fmtNeg(tot.operativa),pct(tot.operativa,tot.ingresos)+' de los ingresos');
+  set('kNet',fmtNeg(tot.neta),pct(tot.neta,tot.ingresos)+' de los ingresos');
+  el('kNet').style.color = tot.neta<0?'#D62839':'#2A9D8F';
+  set('kCv',fmtMoney(tot.costoTot),pct(tot.costoTot,tot.ingresos)+' de los ingresos');
+  set('kNom',fmtMoney(tot.opex['Nómina']||0),pct(tot.opex['Nómina']||0,tot.ingresos)+' de los ingresos');
+  set('kRen',fmtMoney(tot.opex['Renta']||0),pct(tot.opex['Renta']||0,tot.ingresos)+' de los ingresos');
+  set('kRec',pct(tot.neta,INVERSION_TOTAL),'utilidad neta vs. inversión de '+fmtMoney(INVERSION_TOTAL));
+
+  // Tabla
+  const row=(cls,label,get,opts={})=>{
+    const cells=cols.map(c=>{const v=get(c.d);return `<td class="num ${v<0?'neg':''}">${opts.neg?fmtNeg(-v):fmtNeg(v)}</td>`;}).join('');
+    const p=`<td class="num pc">${pct(opts.neg?-get(tot):get(tot),tot.ingresos)}</td>`;
+    return `<tr class="${cls}"><td>${label}</td>${cells}${p}</tr>`;
+  };
+  const head=`<thead><tr><th>Concepto</th>${cols.map(c=>`<th class="r">${c.t}</th>`).join('')}<th class="r">% ingresos</th></tr></thead>`;
+  const catsOf=(key,order)=>{
+    const all=new Set(); [...cols].forEach(c=>Object.keys(c.d[key]).forEach(k=>all.add(k)));
+    return [...all].sort((a,b)=>(order&&order.includes(a)?-1:0)-(order&&order.includes(b)?-1:0)||(tot[key][b]||0)-(tot[key][a]||0));
+  };
+  let h=head+'<tbody>';
+  h+='<tr class="sec"><td colspan="'+(cols.length+2)+'">Ingresos</td></tr>';
+  h+=row('sub','Ventas cafetería (POS)',d=>d.pos);
+  h+=row('sub','Ventas Uber Eats',d=>d.uber);
+  if(tot.uberCom>0) h+=row('sub','(−) Comisión Uber Eats',d=>-d.uberCom);
+  h+=row('tot','Ingresos netos',d=>d.ingresos);
+  h+='<tr class="sec"><td colspan="'+(cols.length+2)+'">Costo de ventas</td></tr>';
+  catsOf('costo').forEach(k=>{h+=row('sub',k,d=>d.costo[k]||0);});
+  h+=row('tot','Total costo de ventas',d=>d.costoTot);
+  h+=row('res','Utilidad bruta',d=>d.bruta);
+  h+='<tr class="sec"><td colspan="'+(cols.length+2)+'">Gastos operativos</td></tr>';
+  catsOf('opex',['Nómina','Renta']).forEach(k=>{h+=row('sub',k,d=>d.opex[k]||0);});
+  h+=row('tot','Total gastos operativos',d=>d.opexTot);
+  h+=row('res','Utilidad operativa',d=>d.operativa);
+  h+=row('sub','(−) Comisiones bancarias (POS)',d=>d.comPos);
+  h+=row('res final','Utilidad neta',d=>d.neta);
+  h+='</tbody>';
+  el('erTable').innerHTML=h;
+
+  // Gráfica por mes
+  const lab=months.map(mesNombre);
+  mk('mesChart',{type:'bar',data:{labels:lab,datasets:[
+    {label:'Ingresos netos',data:per.map(d=>d.ingresos),backgroundColor:'#215AB3',borderRadius:6,maxBarThickness:46},
+    {label:'Costo de ventas',data:per.map(d=>d.costoTot),backgroundColor:'#E9A23B',borderRadius:6,maxBarThickness:46},
+    {label:'Gastos op. + comisión',data:per.map(d=>d.opexTot+d.comPos),backgroundColor:'#E76F51',borderRadius:6,maxBarThickness:46},
+    {label:'Utilidad neta',data:per.map(d=>d.neta),backgroundColor:'#2A9D8F',borderRadius:6,maxBarThickness:46}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700},boxWidth:12}},datalabels:{color:'#14366B',anchor:'end',align:'top',font:{family:'Manrope',weight:800,size:10},formatter:moneyLabel}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700},color:'#14366B'}},y:{grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}}});
+
+  // A dónde se va cada peso
+  const nom=tot.opex['Nómina']||0, ren=tot.opex['Renta']||0, otros=tot.opexTot-nom-ren;
+  const parts=[['Costo de ventas',tot.costoTot],['Nómina',nom],['Renta',ren],['Otros gastos',otros],['Comisiones',tot.comPos],['Utilidad neta',Math.max(0,tot.neta)]].filter(p=>p[1]>0);
+  const base=parts.reduce((s,p)=>s+p[1],0);
+  mk('pesoChart',{type:'doughnut',data:{labels:parts.map(p=>p[0]),datasets:[{data:parts.map(p=>p[1]),backgroundColor:['#E9A23B','#8E44AD','#E76F51','#B5838D','#4D7BC2','#2A9D8F'].slice(0,parts.length),borderColor:'#fff',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700,size:10.5},boxWidth:11,padding:8}},
+      tooltip:{callbacks:{label:c=>` ${c.label}: ${fmtMoney(c.parsed)} (${(c.parsed/base*100).toFixed(1)}%)`}},
+      datalabels:{color:'#fff',font:FONT,formatter:(v)=>{const p=v/base*100;return p>=4?p.toFixed(0)+'%':'';}}}}});
+  if(tot.neta<0){ el('pesoChart').parentElement.insertAdjacentHTML('beforeend',''); }
+
+  // Semanal (por fecha de movimiento)
+  const wk=d=>{const x=new Date(d+'T00:00:00');const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return x.toISOString().slice(0,10);};
+  const div = el('fIva').value==='16'?1.16:(el('fIva').value==='8'?1.08:1), sin=el('fIva').value!=='total', up=Math.max(0,parseFloat(el('fUber').value)||0)/100;
+  const W={}; const add=(f,k,v)=>{const w=wk(f);(W[w]||(W[w]={i:0,e:0}))[k]+=v;};
+  ING.filter(i=>months.includes(i.f.slice(0,7))).forEach(i=>{add(i.f,'i',((i.efectivo||0)+(i.tarjeta||0))/div);add(i.f,'e',i.comision||0);});
+  UBER.filter(u=>months.includes(u.f.slice(0,7))).forEach(u=>add(u.f,'i',u.m/div*(1-up)));
+  GAS.filter(g=>months.includes(g.m)).forEach(g=>add(g.f,'e',sin?g.s:g.n));
+  const wks=Object.keys(W).sort();
+  const wl=wks.map(w=>new Date(w+'T00:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short'}));
+  mk('semChart',{data:{labels:wl,datasets:[
+    {type:'bar',label:'Ingresos',data:wks.map(w=>W[w].i),backgroundColor:'#215AB3',borderRadius:6,maxBarThickness:34},
+    {type:'bar',label:'Egresos',data:wks.map(w=>W[w].e),backgroundColor:'#E76F51',borderRadius:6,maxBarThickness:34},
+    {type:'line',label:'Utilidad',data:wks.map(w=>W[w].i-W[w].e),borderColor:'#2A9D8F',backgroundColor:'#2A9D8F',tension:.3,borderWidth:3,pointRadius:3,
+      datalabels:{display:true,align:'top',anchor:'end',color:'#1d7a6f',backgroundColor:'rgba(255,255,255,.85)',borderRadius:4,padding:2,font:{family:'Manrope',weight:800,size:10},formatter:moneyLabel}}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700},boxWidth:12}},datalabels:{display:false}},
+      scales:{x:{grid:{display:false},title:{display:true,text:'Semana que inicia',color:'#95A5BC',font:{family:'Manrope',size:10}},ticks:{font:{family:'Manrope',weight:700},color:'#14366B'}},y:{grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}}});
+
+  // Opex por concepto
+  const ox=Object.entries(tot.opex).sort((a,b)=>b[1]-a[1]);
+  mk('opexChart',{type:'bar',data:{labels:ox.map(e=>e[0]),datasets:[{data:ox.map(e=>e[1]),backgroundColor:ox.map((_,i)=>CHART_PALETTE[i%CHART_PALETTE.length]),borderRadius:6,maxBarThickness:20}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:46}},plugins:{legend:{display:false},datalabels:{color:'#14366B',anchor:'end',align:'right',font:{family:'Manrope',weight:800,size:10.5},formatter:moneyLabel}},
+      scales:{x:{grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}},y:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700,size:10.5},color:'#14366B'}}}}});
+
+  window.__cols=cols; window.__tot=tot;
+}
+
+['fMes','fIva'].forEach(i=>el(i).addEventListener('change',render));
+el('fUber').addEventListener('input',render);
+el('clearFilters').addEventListener('click',()=>{el('fMes').value='all';el('fIva').value='total';el('fUber').value=0;render();});
+el('exportExcel').addEventListener('click',()=>{
+  const r2=x=>Math.round(x*100)/100, cols=window.__cols, tot=window.__tot;
+  const lines=[]; const L=(label,get)=>{const o={Concepto:label};cols.forEach(c=>o[c.t]=r2(get(c.d)));o['% ingresos']=tot.ingresos?r2(get(tot)/tot.ingresos*100):null;lines.push(o);};
+  const H=t=>{const o={Concepto:t};cols.forEach(c=>o[c.t]=null);lines.push(o);};
+  const keys=(k)=>[...new Set(cols.flatMap(c=>Object.keys(c.d[k])))].sort((a,b)=>(tot[k][b]||0)-(tot[k][a]||0));
+  H('INGRESOS');L('Ventas cafetería (POS)',d=>d.pos);L('Ventas Uber Eats',d=>d.uber);L('(-) Comisión Uber Eats',d=>-d.uberCom);L('Ingresos netos',d=>d.ingresos);
+  H('COSTO DE VENTAS');keys('costo').forEach(k=>L(k,d=>d.costo[k]||0));L('Total costo de ventas',d=>d.costoTot);L('UTILIDAD BRUTA',d=>d.bruta);
+  H('GASTOS OPERATIVOS');keys('opex').forEach(k=>L(k,d=>d.opex[k]||0));L('Total gastos operativos',d=>d.opexTot);L('UTILIDAD OPERATIVA',d=>d.operativa);
+  L('(-) Comisiones bancarias (POS)',d=>d.comPos);L('UTILIDAD NETA',d=>d.neta);
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(lines),'Estado de resultados');
+  XLSX.writeFile(wb,'Estado_de_Resultados_MURH.xlsx');
+});
+render();
+</script>
+</body>
+</html>
