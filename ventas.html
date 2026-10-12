@@ -325,16 +325,19 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
 
   <div class="menu-label">Módulos financieros</div>
   <ul class="menu">
+    <li><a href="index.html"><span class="dot"></span> Inicio</a></li>
     <li><a href="inversion.html"><span class="dot"></span> Inversión</a></li>
     <li><a class="active" href="ventas.html"><span class="dot"></span> Ventas</a></li>
     <li><a href="ventas-ubereats.html"><span class="dot"></span> Ventas Uber Eats</a></li>
+    <li><a href="ventas-totales.html"><span class="dot"></span> Ventas totales</a></li>
     <li><a href="gastos-operativos.html"><span class="dot"></span> Gastos operativos</a></li>
     <li><a href="estado-resultados.html"><span class="dot"></span> Estado de resultados</a></li>
+    <li><a href="declaracion-impuestos.html"><span class="dot"></span> Declaración de impuestos</a></li>
   </ul>
 
   <div class="sidebar-foot">
-    <div class="who" id="whoami">Hola</div>
-    <a href="index.html?salir=1">Cerrar sesión</a>
+    <div class="who">MURH Hipódromo</div>
+    <a href="index.html">← Volver al inicio</a>
   </div>
 </aside>
 
@@ -597,9 +600,6 @@ const VENTAS = JSON.parse(pako.ungzip(Uint8Array.from(atob(VENTAS_B64), c => c.c
   .map(r => ({ fecha:r.f, dia:DIA_ABBR_TO_FULL[r.d] || r.d, producto:r.p, categoria:r.c, cantidad:r.q, importe:r.m, precioUnit:r.u }));
 
 /* ---------------- USUARIO ---------------- */
-const params = new URLSearchParams(window.location.search);
-const usuario = params.get('user') || 'Usuario';
-document.getElementById('whoami').textContent = "Hola, " + usuario;
 
 /* ---------------- HELPERS ---------------- */
 function fmtMoney(n){ return "$" + Math.round(n).toLocaleString("es-MX"); }
