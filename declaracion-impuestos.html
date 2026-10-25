@@ -355,204 +355,154 @@ c49 -17 67 -61 61 -155 -7 -105 -48 -209 -156 -388 -47 -76 -88 -154 -94 -172
   <div class="topbar">
     <div>
       <h1>Declaración de impuestos</h1>
-      <p>Estimación mensual de IVA e ISR (RESICO persona física) a partir de tus ventas y gastos con factura</p>
+      <p>Ingresos reales vs. declarados, impuestos y utilidad por socio · mes a mes</p>
     </div>
   </div>
 
   <div class="filters-bar">
     <div class="filter-field"><label for="fMes">Mes</label><select id="fMes"></select></div>
-    <div class="filter-field"><label for="fRate">Tasa de IVA de tus ventas</label>
-      <select id="fRate"><option value="8">8% (franja fronteriza)</option><option value="16">16% (general)</option><option value="0">0% / exento</option></select></div>
-    <div class="filter-field"><label for="fAcre">IVA acreditable</label>
-      <select id="fAcre"><option value="doc">Solo IVA documentado en facturas</option><option value="est">Estimar sobre facturas con la tasa elegida</option></select></div>
-    <div class="filter-field"><label for="fBase">Base de ISR para Uber Eats</label>
-      <select id="fBase"><option value="bruta">Venta bruta (sin IVA)</option><option value="neta">Depósito neto de Uber</option></select></div>
-    <div class="filter-field"><label for="fRetIva">IVA retenido por Uber (%)</label><input type="number" id="fRetIva" value="0" min="0" max="100" step="1"></div>
-    <div class="filter-field"><label for="fRetIsr">ISR retenido por Uber (%)</label><input type="number" id="fRetIsr" value="0" min="0" max="100" step="0.5"></div>
-    <div class="filter-field"><label for="fTasa">Tasa ISR manual (%)</label><input type="number" id="fTasa" value="" placeholder="Auto" min="0" max="35" step="0.1"></div>
-    <button id="clearFilters" type="button">Restablecer</button>
+    <div class="filter-field"><label for="fCanal">Canal</label>
+      <select id="fCanal"><option value="all">POS + Uber Eats</option><option value="POS">Solo POS (cafetería)</option><option value="UBER">Solo Uber Eats</option></select></div>
+    <button id="clearFilters" type="button">Limpiar filtros</button>
     <button id="exportExcel" type="button">⬇ Exportar a Excel</button>
   </div>
 
-  <p class="kpi-section-label">IVA (según filtros)</p>
+  <p class="kpi-section-label">Resumen del periodo (según filtros)</p>
   <div class="kpi-grid">
-    <div class="kpi"><div class="lbl">Ventas cobradas (con IVA)</div><div class="val" id="kVen">—</div><div class="sub" id="kVenSub">&nbsp;</div></div>
-    <div class="kpi"><div class="lbl">IVA trasladado (cobrado)</div><div class="val" id="kTras">—</div><div class="sub" id="kTrasSub">&nbsp;</div></div>
-    <div class="kpi"><div class="lbl">IVA acreditable (gastos con factura)</div><div class="val" id="kAcre">—</div><div class="sub" id="kAcreSub">&nbsp;</div></div>
-    <div class="kpi"><div class="lbl">IVA a cargo / (a favor)</div><div class="val" id="kIva">—</div><div class="sub" id="kIvaSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Ingresos reales</div><div class="val" id="kReal">—</div><div class="sub" id="kRealSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Ingresos declarados</div><div class="val" id="kDecl">—</div><div class="sub" id="kDeclSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Impuestos (IVA + ISR)</div><div class="val" id="kImp">—</div><div class="sub" id="kImpSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Gastos</div><div class="val" id="kGas">—</div><div class="sub" id="kGasSub">&nbsp;</div></div>
   </div>
-  <p class="kpi-section-label">ISR RESICO y total a pagar</p>
-  <div class="kpi-grid">
-    <div class="kpi"><div class="lbl">Ingresos para ISR (sin IVA)</div><div class="val" id="kBase">—</div><div class="sub" id="kBaseSub">&nbsp;</div></div>
-    <div class="kpi"><div class="lbl">ISR estimado</div><div class="val" id="kIsr">—</div><div class="sub" id="kIsrSub">&nbsp;</div></div>
-    <div class="kpi"><div class="lbl">Total de impuestos a pagar</div><div class="val" id="kTot">—</div><div class="sub" id="kTotSub">&nbsp;</div></div>
-    <div class="kpi"><div class="lbl">Fecha límite</div><div class="val" id="kFec" style="font-size:18px;">—</div><div class="sub" id="kFecSub">&nbsp;</div></div>
+  <div class="kpi-grid" id="socGrid">
+    <div class="kpi"><div class="lbl">Utilidad neta</div><div class="val" id="kUtil">—</div><div class="sub" id="kUtilSub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl" id="s1L">Socio 1</div><div class="val" id="s1">—</div><div class="sub" id="s1Sub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl" id="s2L">Socio 2</div><div class="val" id="s2">—</div><div class="sub" id="s2Sub">&nbsp;</div></div>
+    <div class="kpi"><div class="lbl">Carga fiscal</div><div class="val" id="kTasa">—</div><div class="sub" id="kTasaSub">&nbsp;</div></div>
   </div>
 
   <div class="charts-row">
-    <div class="panel"><h3>IVA por mes: trasladado vs. acreditable</h3><div class="chart-box tall"><canvas id="ivaChart"></canvas></div></div>
-    <div class="panel"><h3>Impuestos a pagar por mes (IVA + ISR)</h3><div class="chart-box tall"><canvas id="totChart"></canvas></div></div>
+    <div class="panel"><h3>Ganancia por socio · mes a mes</h3><div class="chart-box tall"><canvas id="socChart"></canvas></div></div>
+    <div class="panel"><h3>Ingresos reales vs. declarados</h3><div class="chart-box tall"><canvas id="decChart"></canvas></div></div>
   </div>
   <div class="charts-row">
-    <div class="panel"><h3>Gasto con factura vs. sin factura</h3><div class="chart-box tall"><canvas id="facChart"></canvas></div></div>
-    <div class="panel"><h3>Gasto sin factura por categoría (IVA que no puedes acreditar)</h3><div class="chart-box tall"><canvas id="catChart"></canvas></div></div>
+    <div class="panel"><h3>Impuestos por mes (IVA + ISR)</h3><div class="chart-box tall"><canvas id="impChart"></canvas></div></div>
+    <div class="panel"><h3>Ganancia acumulada por socio</h3><div class="chart-box tall"><canvas id="accChart"></canvas></div></div>
   </div>
 
   <div class="table-panel">
-    <div class="table-head-row"><h3>Cálculo mensual</h3></div>
-    <div class="table-scroll" style="max-height:none;overflow-y:visible;"><table class="tx" id="txTable"></table></div>
+    <div class="table-head-row"><h3>Ganancia por socio</h3></div>
+    <div class="table-scroll" style="max-height:none;overflow-y:visible;"><table class="tx" id="socTable"></table></div>
   </div>
   <div style="height:18px"></div>
   <div class="table-panel">
-    <div class="table-head-row"><h3>Facturas registradas (IVA acreditable)</h3></div>
-    <div class="table-scroll"><table>
-      <thead><tr><th>Fecha</th><th>Proveedor</th><th>Descripción</th><th>Categoría</th><th>Total</th><th>IVA documentado</th><th>IVA estimado</th></tr></thead>
-      <tbody id="facBody"></tbody>
-      <tfoot><tr class="totals-row"><td colspan="4">Totales</td><td class="num" id="fT">—</td><td class="num" id="fD">—</td><td class="num" id="fE">—</td></tr></tfoot>
-    </table></div>
+    <div class="table-head-row"><h3>Declaración mes a mes</h3></div>
+    <div class="table-scroll" style="max-height:none;overflow-y:visible;"><table class="tx" id="txTable"></table></div>
   </div>
 
   <div class="panel" style="margin:18px 0 30px;">
-    <h3>Supuestos y puntos a validar con tu contador</h3>
+    <h3>Cómo se calcula</h3>
     <ul class="notes">
-      <li><b>Régimen:</b> se asume Persona Física en <b>RESICO</b>. El ISR se calcula sobre los <b>ingresos efectivamente cobrados sin IVA</b> y <b>no permite deducir gastos</b>. Tasas mensuales: 1.00% hasta $25,000 · 1.10% hasta $50,000 · 1.50% hasta $83,333.33 · 2.00% hasta $208,333.33 · 2.50% hasta $3,500,000. Confirma que sigan vigentes en 2026.</li>
-      <li><b>Tasa de IVA:</b> se parte de que los precios del POS y de Uber ya incluyen IVA (ventas ÷ (1 + tasa) × tasa). El 8% aplica solo si estás dado de alta en el estímulo de la región fronteriza.</li>
-      <li><b>IVA acreditable:</b> solo cuenta lo que tiene <b>factura</b> (CFDI) a tu RFC. En tu Excel de gastos únicamente 2 facturas traen IVA (8%); el resto son 0% (alimentos) o no tienen factura. La opción "estimar" aplica la tasa elegida a todo lo marcado con factura y sobreestima si hay productos con tasa 0%. Los pagos en efectivo mayores a $2,000 tampoco se acreditan.</li>
-      <li><b>Uber Eats:</b> Uber suele retener IVA e ISR al restaurante. Captura aquí los porcentajes que veas en tus <b>CFDI de retenciones</b> (por defecto 0). La comisión de Uber es un gasto que se acredita solo si Uber te emite factura.</li>
-      <li><b>Nómina, renta y compras sin factura:</b> en RESICO no reducen el ISR, y sin factura tampoco generan IVA acreditable. Por eso este módulo no los descuenta.</li>
-      <li><b>Fechas:</b> el pago provisional mensual vence el día 17 del mes siguiente. La estimación es informativa; no sustituye la declaración presentada ante el SAT.</li>
+      <li><b>Utilidad neta</b> = ingresos reales − IVA − ISR − gastos, por canal (POS y Uber Eats) y por mes, tal como en tu Excel. Se reparte a partes iguales entre los socios.</li>
+      <li><b>Ingresos declarados</b> vs. <b>reales</b>: la diferencia es lo que cobraste y no se reflejó en lo declarado. Se muestra como referencia, no entra en la utilidad.</li>
+      <li><b>Gastos de Uber Eats:</b> en tu Excel están en 0, así que toda su utilidad parece libre. Los gastos del negocio se cargan solo al POS; por eso conviene mirar el total combinado y no cada canal por separado.</li>
+      <li><b>Fuente:</b> declaracion-impuestos.xlsx (hojas POS y UBER, meses en columnas). Para actualizar, captura el mes en el Excel y vuelve a subirlo.</li>
     </ul>
   </div>
 </main>
 
 <script>
-const ING = [{"f":"2026-08-23","ef":4290,"ta":10405},{"f":"2026-08-24","ef":1340,"ta":1230},{"f":"2026-08-25","ef":1280,"ta":3465},{"f":"2026-08-26","ef":1370,"ta":2335},{"f":"2026-08-27","ef":2810,"ta":1645},{"f":"2026-08-28","ef":2315.05,"ta":2550},{"f":"2026-08-29","ef":1165,"ta":1635},{"f":"2026-08-30","ef":1665,"ta":1780},{"f":"2026-08-31","ef":840,"ta":1220},{"f":"2026-09-01","ef":1185,"ta":890},{"f":"2026-09-02","ef":935,"ta":1965},{"f":"2026-09-03","ef":1975,"ta":1790},{"f":"2026-09-04","ef":1915,"ta":1825},{"f":"2026-09-05","ef":195,"ta":2385},{"f":"2026-09-06","ef":2270,"ta":3505},{"f":"2026-09-07","ef":2935,"ta":1520},{"f":"2026-09-08","ef":1423,"ta":1700},{"f":"2026-09-09","ef":1365,"ta":3085},{"f":"2026-09-10","ef":2435,"ta":2882},{"f":"2026-09-11","ef":815,"ta":2590},{"f":"2026-09-12","ef":1030,"ta":3560},{"f":"2026-09-13","ef":1955,"ta":1537.51},{"f":"2026-09-14","ef":1750,"ta":1860},{"f":"2026-09-15","ef":1090,"ta":2675},{"f":"2026-09-16","ef":1045,"ta":3615.01},{"f":"2026-09-17","ef":1276.5,"ta":2013.75},{"f":"2026-09-18","ef":2510,"ta":2271.5},{"f":"2026-09-19","ef":1615,"ta":3130},{"f":"2026-09-20","ef":1165,"ta":1448.75},{"f":"2026-09-21","ef":740,"ta":2682},{"f":"2026-09-22","ef":2350,"ta":2327.25},{"f":"2026-09-23","ef":3009,"ta":3106.5},{"f":"2026-09-24","ef":1865,"ta":2595.5},{"f":"2026-09-25","ef":580,"ta":1840},{"f":"2026-09-26","ef":1665,"ta":2414.5},{"f":"2026-09-27","ef":1070,"ta":2663.75},{"f":"2026-09-28","ef":1195.1,"ta":960},{"f":"2026-09-29","ef":1680,"ta":1620},{"f":"2026-09-30","ef":1115,"ta":1015}];   /* {f, ef, ta} POS cobrado por día */
-const UB  = [{"f":"2026-09-04","m":395.0,"n":232.34},{"f":"2026-09-05","m":148.33,"n":85.29},{"f":"2026-09-07","m":916.96,"n":546.38},{"f":"2026-09-08","m":1354.02,"n":794.1},{"f":"2026-09-09","m":1313.64,"n":802.2},{"f":"2026-09-10","m":2365.0,"n":1204.51},{"f":"2026-09-11","m":3252.57,"n":1550.61},{"f":"2026-09-12","m":1138.35,"n":557.01},{"f":"2026-09-13","m":555.19,"n":278.24},{"f":"2026-09-14","m":925.97,"n":499.87},{"f":"2026-09-15","m":3447.55,"n":1787.76},{"f":"2026-09-16","m":3143.25,"n":1669.51},{"f":"2026-09-17","m":2471.1,"n":1278.97},{"f":"2026-09-18","m":2463.04,"n":1408.55},{"f":"2026-09-19","m":508.33,"n":257.66},{"f":"2026-09-20","m":1829.1,"n":960.89},{"f":"2026-09-21","m":2309.74,"n":1208.56},{"f":"2026-09-22","m":2270.29,"n":1154.16},{"f":"2026-09-23","m":2625.55,"n":1291.81},{"f":"2026-09-24","m":1351.34,"n":745.89},{"f":"2026-09-25","m":2100.19,"n":1086.51},{"f":"2026-09-26","m":2074.78,"n":1210.07},{"f":"2026-09-27","m":921.72,"n":552.93},{"f":"2026-09-28","m":899.23,"n":526.45},{"f":"2026-09-29","m":1922.59,"n":1139.84},{"f":"2026-09-30","m":1777.18,"n":1068.45}];    /* {f, m, n} Uber por día: venta con IVA y depósito neto */
-const GAS = [{"f":"2026-08-21","m":"2026-08","c":"Empaques y desechables","v":"Francisco Daniel","d":"vasos y tapas","n":4680.8,"s":4334.07,"fa":1,"iva":0.08,"inv":0},{"f":"2026-08-21","m":"2026-08","c":"Costo de venta","v":"Red Hills","d":"Caramelo, Vainilla,Lavanda,Cacao","n":2200,"s":2200.0,"fa":1,"iva":0,"inv":0},{"f":"2026-08-21","m":"2026-08","c":"Servicios del local","v":"Finsectos S.A de C.V","d":"Fumigacion","n":1296,"s":1200.0,"fa":1,"iva":0.08,"inv":0},{"f":"2026-08-21","m":"2026-08","c":"Costo de venta","v":"XITA","d":"Crosains","n":630,"s":630.0,"fa":0,"iva":0,"inv":0},{"f":"2026-08-22","m":"2026-08","c":"Costo de venta","v":"Restaurant Deport","d":"Leches","n":1137.39,"s":1137.39,"fa":0,"iva":0,"inv":0},{"f":"2026-08-23","m":"2026-08","c":"Limpieza e higiene","v":"Costco","d":"INSUMOS","n":6278.19,"s":6278.19,"fa":0,"iva":0,"inv":0},{"f":"2026-08-24","m":"2026-08","c":"Equipo y mantenimiento","v":"Costco","d":"INSUMOS","n":2350.8,"s":2350.8,"fa":0,"iva":0,"inv":1},{"f":"2026-08-25","m":"2026-08","c":"Costo de venta","v":"Excelso","d":"Cafe","n":5690,"s":5690.0,"fa":0,"iva":0,"inv":0},{"f":"2026-08-25","m":"2026-08","c":"Limpieza e higiene","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Mercancias General","n":461.9,"s":461.9,"fa":1,"iva":0,"inv":0},{"f":"2026-08-26","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"INSUMOS","n":3660.31,"s":3660.31,"fa":0,"iva":0,"inv":0},{"f":"2026-08-26","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Mercancias General","n":111.8,"s":111.8,"fa":1,"iva":0,"inv":0},{"f":"2026-08-26","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Mercancias General","n":55.9,"s":55.9,"fa":1,"iva":0,"inv":0},{"f":"2026-08-27","m":"2026-08","c":"Costo de venta","v":"Dulces Brenda","d":"INSUMOS","n":1440,"s":1440.0,"fa":0,"iva":0,"inv":0},{"f":"2026-08-27","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Mercancias General","n":188,"s":188.0,"fa":1,"iva":0,"inv":0},{"f":"2026-08-28","m":"2026-08","c":"Costo de venta","v":"Brown Butter","d":"Jarabe Mango","n":1375,"s":1375.0,"fa":1,"iva":0,"inv":0},{"f":"2026-08-28","m":"2026-08","c":"Costo de venta","v":"Ayumis","d":"Postres de Ojaldre 5rolls 21 crosain","n":1222,"s":1222.0,"fa":1,"iva":0,"inv":0},{"f":"2026-08-28","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"INSUMOS","n":844.11,"s":844.11,"fa":0,"iva":0,"inv":0},{"f":"2026-08-28","m":"2026-08","c":"Costo de venta","v":"Red Hills","d":"Jarabe Pupking","n":220,"s":220.0,"fa":1,"iva":0,"inv":0},{"f":"2026-08-29","m":"2026-08","c":"Equipo y mantenimiento","v":"Aireacondicionado","d":"Aireacondicionado","n":1800,"s":1800.0,"fa":0,"iva":0,"inv":0},{"f":"2026-08-29","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Mercancias General","n":227.04,"s":227.04,"fa":1,"iva":0,"inv":0},{"f":"2026-08-29","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"INSUMOS","n":202.6,"s":202.6,"fa":0,"iva":0,"inv":0},{"f":"2026-08-30","m":"2026-08","c":"Costo de venta","v":"Brown Butter","d":"Galletas 8 lotus 8 smore 8 chocolate","n":1320,"s":1320.0,"fa":1,"iva":0,"inv":0},{"f":"2026-08-30","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"INSUMOS","n":139.5,"s":139.5,"fa":0,"iva":0,"inv":0},{"f":"2026-08-31","m":"2026-08","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Mercancias General","n":1651.02,"s":1651.02,"fa":0,"iva":0,"inv":0},{"f":"2026-09-01","m":"2026-09","c":"Costo de venta","v":"Excelso","d":"Sí","n":5390,"s":5390.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-01","m":"2026-09","c":"Costo de venta","v":"Galletas De Zanahoria","d":"Galletas De Zanahoria","n":600,"s":600.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-01","m":"2026-09","c":"Equipo y mantenimiento","v":"TJ Max","d":"Jarras vidrio","n":330.82,"s":330.82,"fa":0,"iva":0,"inv":1},{"f":"2026-09-02","m":"2026-09","c":"Costo de venta","v":"Red Hills","d":"Jarabes Beries","n":600,"s":600.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-02","m":"2026-09","c":"Servicios del local","v":"Extinguidores Salgado","d":"Extintor","n":550,"s":550.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-03","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Hielos limones etc","n":651.19,"s":651.19,"fa":0,"iva":0,"inv":0},{"f":"2026-09-03","m":"2026-09","c":"Equipo y mantenimiento","v":"Office Depot","d":"Tijeras nota","n":111.6,"s":111.6,"fa":0,"iva":0,"inv":0},{"f":"2026-09-04","m":"2026-09","c":"Costo de venta","v":"Ayumis","d":"Ayumis Postres","n":752,"s":752.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-04","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Hielos limones etc","n":329.42,"s":329.42,"fa":0,"iva":0,"inv":0},{"f":"2026-09-07","m":"2026-09","c":"Costo de venta","v":"Sinesis","d":"Matcha","n":4170,"s":4170.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-07","m":"2026-09","c":"Marketing y ventas","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Hielos limones etc","n":1498.34,"s":1498.34,"fa":0,"iva":0,"inv":0},{"f":"2026-09-07","m":"2026-09","c":"Marketing y ventas","v":"Floreria","d":"Flores","n":350,"s":350.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-08","m":"2026-09","c":"Costo de venta","v":"Red Hills","d":"Jarabe Vainilla","n":800,"s":800.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-08","m":"2026-09","c":"Equipo y mantenimiento","v":"Home Depot","d":"Bote, baura, limpieza","n":599,"s":599.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-08","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Leches agua","n":555.57,"s":555.57,"fa":0,"iva":0,"inv":0},{"f":"2026-09-09","m":"2026-09","c":"Costo de venta","v":"Ayumis","d":"5 rol,5pistache,58almendra,14chese","n":1500,"s":1500.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-09","m":"2026-09","c":"Costo de venta","v":"Ojos Miel","d":"Jarabe Mango","n":880,"s":880.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-09","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"12 leches 1 crema","n":830.7,"s":830.7,"fa":0,"iva":0,"inv":0},{"f":"2026-09-10","m":"2026-09","c":"Costo de venta","v":"XITA","d":"Crosains","n":300,"s":300.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-11","m":"2026-09","c":"Costo de venta","v":"Jersey","d":"Leche","n":1674,"s":1674.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-11","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Crema popotes,aguas mineral y tonica","n":1123.4,"s":1123.4,"fa":0,"iva":0,"inv":0},{"f":"2026-09-11","m":"2026-09","c":"Costo de venta","v":"Fruteria el paraiso","d":"Platanos, limon amarillo","n":287.15,"s":287.15,"fa":0,"iva":0,"inv":0},{"f":"2026-09-11","m":"2026-09","c":"Costo de venta","v":"Raul sepulveda","d":"Jarabe de Platano","n":240,"s":240.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-11","m":"2026-09","c":"Empaques y desechables","v":"Dulces Brenda","d":"Bolsa Postre, toronja deshidratada","n":156,"s":156.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-11","m":"2026-09","c":"Costo de venta","v":"abarrotes el 4","d":"CANELA","n":100,"s":100.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-11","m":"2026-09","c":"Limpieza e higiene","v":"Roma","d":"Papel de Baño","n":28,"s":28.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-12","m":"2026-09","c":"Costo de venta","v":"Brown Butter","d":"GALLETAS","n":1320,"s":1320.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-12","m":"2026-09","c":"Costo de venta","v":"XITA","d":"Crosains","n":586,"s":586.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-12","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Servilletas Crema","n":427.8,"s":427.8,"fa":0,"iva":0,"inv":0},{"f":"2026-09-12","m":"2026-09","c":"Limpieza e higiene","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"windex y tapas","n":119.8,"s":119.8,"fa":0,"iva":0,"inv":0},{"f":"2026-09-14","m":"2026-09","c":"Costo de venta","v":"Ayumis","d":"8Roll,8Alm,5Pist,7ches","n":1316,"s":1316.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-14","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Hielo,Toni,queso","n":630,"s":630.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-14","m":"2026-09","c":"Costo de venta","v":"Dulces Brenda","d":"Toronjas","n":304,"s":304.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-14","m":"2026-09","c":"Costo de venta","v":"Fruteria el paraiso","d":"Limones","n":288.37,"s":288.37,"fa":0,"iva":0,"inv":0},{"f":"2026-09-15","m":"2026-09","c":"Local e instalaciones","v":"MARIFER","d":"RENTA","n":20000,"s":20000.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-15","m":"2026-09","c":"Empaques y desechables","v":"Bacal Insumos","d":"vasos","n":1458,"s":1458.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-15","m":"2026-09","c":"Empaques y desechables","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Tapas de vasos","n":80,"s":80.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-16","m":"2026-09","c":"Costo de venta","v":"La Local","d":"pasteles de crepas","n":668,"s":668.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-16","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"cremas","n":563.7,"s":563.7,"fa":0,"iva":0,"inv":0},{"f":"2026-09-16","m":"2026-09","c":"Marketing y ventas","v":"Floreria","d":"Flores","n":350,"s":350.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-16","m":"2026-09","c":"Equipo y mantenimiento","v":"Home Depot","d":"Protectores","n":240,"s":240.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-17","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"3 latas 1 abrelatas","n":327.6,"s":327.6,"fa":0,"iva":0,"inv":0},{"f":"2026-09-18","m":"2026-09","c":"Costo de venta","v":"Jersey","d":"Leche","n":1674,"s":1674.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-18","m":"2026-09","c":"Costo de venta","v":"Ojos Miel","d":"Jarabe Mango Caramelo","n":1360,"s":1360.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-18","m":"2026-09","c":"Costo de venta","v":"Ayumis","d":"5rll 3 pistache 8 chees 6 almendras","n":1034,"s":1034.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-18","m":"2026-09","c":"Costo de venta","v":"La Local","d":"pasteles de crepas","n":468,"s":468.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-18","m":"2026-09","c":"Costo de venta","v":"ROMA","d":"Hielo Roma","n":86,"s":86.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-18","m":"2026-09","c":"Costo de venta","v":"Calimax","d":"Platanos","n":27.36,"s":27.36,"fa":0,"iva":0,"inv":0},{"f":"2026-09-19","m":"2026-09","c":"Costo de venta","v":"Galletas De Zanahoria","d":"Galletas De Zanahoria","n":600,"s":600.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-20","m":"2026-09","c":"Costo de venta","v":"Brown Butter","d":"8 lotus, 8 choco, 8 smurft","n":1340,"s":1340.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-21","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"Hielo y Limones","n":503.33,"s":503.33,"fa":0,"iva":0,"inv":0},{"f":"2026-09-22","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"6 Pure de Calabaza, 2 lyncont","n":635,"s":635.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-22","m":"2026-09","c":"Equipo y mantenimiento","v":"Cerrajero de la Esquina","d":"Llaves","n":205,"s":205.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-23","m":"2026-09","c":"Costo de venta","v":"Ayumis","d":"3 Pista, 3 Roll 6 Roll 6 ches 6 almendra","n":1131,"s":1131.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-23","m":"2026-09","c":"Equipo y mantenimiento","v":"Papelia","d":"Papeleria","n":83.5,"s":83.5,"fa":0,"iva":0,"inv":0},{"f":"2026-09-24","m":"2026-09","c":"Costo de venta","v":"REMATES","d":"144 latas","n":2140,"s":2140.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-24","m":"2026-09","c":"Servicios del local","v":"MARIFER","d":"Agua Local","n":1985,"s":1985.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-24","m":"2026-09","c":"Marketing y ventas","v":"Marco","d":"MERCADOTECNIA","n":1450,"s":1450.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-24","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"2Crema lyncont, crema para batir, platanos, agua tonica, 4hielos","n":1249.39,"s":1249.39,"fa":0,"iva":0,"inv":0},{"f":"2026-09-24","m":"2026-09","c":"Servicios del local","v":"Filtro de Agua","d":"Filtro de Agua","n":718.2,"s":718.2,"fa":0,"iva":0,"inv":0},{"f":"2026-09-24","m":"2026-09","c":"Marketing y ventas","v":"Publicidad","d":"Anuncio Pupking","n":450,"s":450.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-24","m":"2026-09","c":"Marketing y ventas","v":"Floreria","d":"Flores","n":350,"s":350.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-25","m":"2026-09","c":"Costo de venta","v":"Jersey","d":"6 Cajas De Leche","n":2008,"s":2008.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-25","m":"2026-09","c":"Costo de venta","v":"Red Hills","d":"Jarabes 1 berries,1lavanda,1 caramelo, pupking","n":1700,"s":1700.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-25","m":"2026-09","c":"Costo de venta","v":"Ayumis","d":"4,rolls,4 pistache,chese,2 almendra","n":658,"s":658.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-25","m":"2026-09","c":"Limpieza e higiene","v":"Walmart","d":"papeles, limones, fabuloso","n":411.93,"s":411.93,"fa":0,"iva":0,"inv":0},{"f":"2026-09-25","m":"2026-09","c":"Empaques y desechables","v":"Dulces Brenda","d":"Bolsas de Papel, porta vasos","n":158,"s":158.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-28","m":"2026-09","c":"Costo de venta","v":"Excelso","d":"Cafe","n":5390,"s":5390.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-29","m":"2026-09","c":"Costo de venta","v":"Smart & Final del Noroeste, S.A. de C.V.","d":"crema tonicos, hielo, limon","n":1804.4,"s":1804.4,"fa":0,"iva":0,"inv":0},{"f":"2026-09-29","m":"2026-09","c":"Costo de venta","v":"Brown Butter","d":"8 lotus, 8 smuft, 8 chocolate","n":1320,"s":1320.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-29","m":"2026-09","c":"Costo de venta","v":"Ayumis","d":"pan ayumis","n":752,"s":752.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-29","m":"2026-09","c":"Costo de venta","v":"Raul sepulveda","d":"Jarabe de Platano","n":540,"s":540.0,"fa":0,"iva":0,"inv":0},{"f":"2026-09-29","m":"2026-09","c":"Costo de venta","v":"Walmart","d":"Platano","n":11.97,"s":11.97,"fa":0,"iva":0,"inv":0}];   /* gastos: {f,m,c,v,d,n,s,fa,iva,inv} */
-const TASAS = [[25000,.01],[50000,.011],[83333.33,.015],[208333.33,.02],[3500000,.025]];
+const D = {"meses": ["2026-09", "2026-10", "2026-11", "2026-12"], "socios": [{"n": "Murih", "p": 0.5}, {"n": "Martín", "p": 0.5}], "canales": {"POS": {"real": [153158.96, 0.0, 0.0, 0.0], "decl": [88956.0, 0.0, 0.0, 0.0], "iva": [0.0, 0.0, 0.0, 0.0], "isr": [1235.0, 0.0, 0.0, 0.0], "gas": [153813.0, 0.0, 0.0, 0.0]}, "UBER": {"real": [23899.0, 0.0, 0.0, 0.0], "decl": [35618.53, 0.0, 0.0, 0.0], "iva": [2375.0, 0.0, 0.0, 0.0], "isr": [0.0, 0.0, 0.0, 0.0], "gas": [0.0, 0.0, 0.0, 0.0]}}};
+/* D = { meses:[YYYY-MM], socios:[{n,p}], canales:{POS:{real:[],decl:[],iva:[],isr:[],gas:[]}, UBER:{...}} } */
 
 const el=id=>document.getElementById(id);
-const fmtMoney = n => "$" + Math.round(n).toLocaleString("es-MX");
-const fmtNeg = n => (n=n||0) < 0 ? '(' + fmtMoney(-n) + ')' : fmtMoney(n);
-const moneyLabel = v => { const a=Math.abs(v), t=a>=1000 ? '$'+(a/1000).toFixed(1)+'k' : '$'+Math.round(a).toLocaleString('es-MX'); return v<0 ? '('+t+')' : t; };
-const kTick = v => '$'+(v/1000).toFixed(1)+'k';
+const fmtMoney=n=>"$"+Math.round(n).toLocaleString("es-MX");
+const fmtNeg=n=>{n=n||0;return n<0?'('+fmtMoney(-n)+')':fmtMoney(n);};
+const moneyLabel=v=>{const a=Math.abs(v),t=a>=1000?'$'+(a/1000).toFixed(1)+'k':'$'+Math.round(a).toLocaleString('es-MX');return v<0?'('+t+')':t;};
+const kTick=v=>moneyLabel(v);
 const MESES={'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
-const mesNombre = m => MESES[m.slice(5)] + ' ' + m.slice(0,4);
-const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const fmtFechaL = iso => new Date(iso+"T00:00:00").toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"});
+const mesNombre=m=>MESES[m.slice(5)]+' '+m.slice(0,4);
 const FONT={family:'Manrope',weight:800,size:11};
-const CHART_PALETTE=['#215AB3','#E76F51','#2A9D8F','#E9A23B','#8E44AD','#4D7BC2','#D62839','#588157','#B5838D','#457B9D'];
 if (typeof ChartDataLabels !== 'undefined') { Chart.register(ChartDataLabels); }
 const charts={}; const mk=(id,cfg)=>{ if(charts[id]) charts[id].destroy(); charts[id]=new Chart(el(id),cfg); };
-const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+const COL=['#215AB3','#2A9D8F','#E9A23B','#E76F51'];
 
-const MONTHS=[...new Set([...ING.map(i=>i.f.slice(0,7)),...UB.map(u=>u.f.slice(0,7))])].sort();
-el('fMes').innerHTML='<option value="all">Todos</option>'+MONTHS.map(m=>`<option value="${m}">${mesNombre(m)}</option>`).join('');
+/* meses con datos */
+const IDX=D.meses.map((m,i)=>i).filter(i=>Object.values(D.canales).some(c=>['real','decl','iva','isr','gas'].some(k=>(c[k][i]||0)!==0)));
+el('fMes').innerHTML='<option value="all">Todos los meses</option>'+IDX.map(i=>`<option value="${i}">${mesNombre(D.meses[i])}</option>`).join('');
+el('s1L').textContent='Ganancia '+D.socios[0].n; el('s2L').textContent='Ganancia '+D.socios[1].n;
 
-function tasaIsr(base){ const man=parseFloat(el('fTasa').value); if(!isNaN(man)) return man/100; for(const [t,r] of TASAS) if(base<=t) return r; return TASAS[TASAS.length-1][1]; }
-function limite(m){ const [y,mo]=m.split('-').map(Number); return new Date(y, mo, 17); }  // día 17 del mes siguiente
-
-function calc(months){
-  const r=parseFloat(el('fRate').value)/100, k=1+r, est=el('fAcre').value==='est';
-  const baseNeta=el('fBase').value==='neta';
-  const retIva=Math.max(0,parseFloat(el('fRetIva').value)||0)/100, retIsr=Math.max(0,parseFloat(el('fRetIsr').value)||0)/100;
-  const inM=m=>months.includes(m);
-  const pos=sum(ING.filter(i=>inM(i.f.slice(0,7))),i=>i.ef+i.ta);
-  const ubB=sum(UB.filter(u=>inM(u.f.slice(0,7))),u=>u.m), ubN=sum(UB.filter(u=>inM(u.f.slice(0,7))),u=>u.n);
-  const ventas=pos+ubB;
-  const tras=ventas/k*r;
-  const retenido=ubB/k*r*retIva;
-  const gf=GAS.filter(g=>inM(g.m)&&g.fa);
-  const doc=sum(gf,g=>g.n-g.s), estim=sum(gf,g=>g.n/k*r);
-  const acre=est?estim:doc;
-  const iva=tras-acre-retenido;
-  const baseUb=baseNeta?ubN:ubB/k;
-  const base=pos/k+baseUb;
-  const tasa=tasaIsr(base);
-  const isrBruto=base*tasa, isrRet=ubB/k*retIsr;
-  const isr=Math.max(0,isrBruto-isrRet);
-  const total=Math.max(0,iva)+isr;
-  const gAll=GAS.filter(g=>inM(g.m)&&!g.inv);
-  const conF=sum(gAll.filter(g=>g.fa),g=>g.n), sinF=sum(gAll.filter(g=>!g.fa),g=>g.n);
-  return {pos,ubB,ubN,ventas,tras,retenido,doc,estim,acre,iva,base,tasa,isrBruto,isrRet,isr,total,conF,sinF};
+function mes(i,canal){
+  const chs=canal==='all'?Object.keys(D.canales):[canal];
+  const s=k=>chs.reduce((a,c)=>a+(D.canales[c][k][i]||0),0);
+  const real=s('real'),decl=s('decl'),iva=s('iva'),isr=s('isr'),gas=s('gas');
+  const util=real-iva-isr-gas;
+  return {real,decl,iva,isr,gas,util,imp:iva+isr,nodecl:real-decl,s1:util*D.socios[0].p,s2:util*D.socios[1].p};
 }
+const add=(a,b)=>{const o={};for(const k in a)o[k]=a[k]+b[k];return o;};
 
 function render(){
-  const sel=el('fMes').value, months=sel==='all'?MONTHS:[sel];
-  const per=months.map(m=>calc([m])), tot=calc(months);
-  const set=(id,v,s)=>{el(id).textContent=v; if(s!==undefined) el(id+'Sub').textContent=s;};
-  const rate=el('fRate').value;
-  set('kVen',fmtMoney(tot.ventas),'POS '+fmtMoney(tot.pos)+' · Uber '+fmtMoney(tot.ubB));
-  set('kTras',fmtMoney(tot.tras),'tasa '+rate+'% incluida en el precio');
-  set('kAcre',fmtMoney(tot.acre),(el('fAcre').value==='est'?'estimado':'documentado')+' · '+GAS.filter(g=>months.includes(g.m)&&g.fa).length+' facturas');
-  set('kIva',fmtNeg(tot.iva),tot.iva<0?'saldo a favor':'a pagar al SAT'+(tot.retenido?' (ya descuenta retención Uber)':''));
-  el('kIva').style.color=tot.iva<0?'#2A9D8F':'';
-  set('kBase',fmtMoney(tot.base),el('fBase').value==='neta'?'POS sin IVA + depósito neto Uber':'POS + Uber, ambos sin IVA');
-  set('kIsr',fmtMoney(tot.isr),sel==='all'?'suma mensual · tasa por tramo de cada mes':'tasa '+(tot.tasa*100).toFixed(2)+'%'+(tot.isrRet?' · ya descuenta retención':''));
-  const totalMes=months.reduce((s,m,i)=>s+per[i].total,0);
-  set('kTot',fmtMoney(totalMes),tot.ventas?(totalMes/tot.ventas*100).toFixed(1)+'% de las ventas cobradas':'');
-  const hoy=new Date(); hoy.setHours(0,0,0,0);
-  const last=months[months.length-1], lim=limite(last), dd=Math.round((lim-hoy)/864e5);
-  set('kFec',lim.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}),(sel==='all'?'último mes: '+mesNombre(last)+' · ':'')+(dd<0?'plazo vencido hace '+(-dd)+' días (verifica si ya presentaste)':dd===0?'vence hoy':'faltan '+dd+' días'));
+  const canal=el('fCanal').value, sel=el('fMes').value;
+  const idx=sel==='all'?IDX:[+sel];
+  const per=idx.map(i=>mes(i,canal));
+  const tot=per.reduce(add);
+  const set=(id,v,s)=>{el(id).textContent=v;if(s!==undefined)el(id+'Sub').textContent=s;};
+  const pc=(a,b)=>b?(a/b*100).toFixed(1)+'%':'—';
+  set('kReal',fmtMoney(tot.real),idx.length+' mes(es)');
+  set('kDecl',fmtMoney(tot.decl),pc(tot.decl,tot.real)+' de lo real · sin declarar '+fmtMoney(tot.nodecl));
+  set('kImp',fmtMoney(tot.imp),'IVA '+fmtMoney(tot.iva)+' · ISR '+fmtMoney(tot.isr));
+  set('kGas',fmtMoney(tot.gas),pc(tot.gas,tot.real)+' de los ingresos reales');
+  set('kUtil',fmtNeg(tot.util),pc(tot.util,tot.real)+' de los ingresos reales');
+  el('kUtil').style.color=tot.util<0?'#D62839':'';
+  set('s1',fmtNeg(tot.s1),Math.round(D.socios[0].p*100)+'% de la utilidad');
+  set('s2',fmtNeg(tot.s2),Math.round(D.socios[1].p*100)+'% de la utilidad');
+  set('kTasa',pc(tot.imp,tot.real),'de impuestos sobre ingresos reales · '+pc(tot.imp,tot.decl)+' sobre lo declarado');
 
-  // tabla mensual
-  const cols=months.length>1?[...months.map((m,i)=>({t:mesNombre(m),d:per[i]})),{t:'Total',d:{...tot,isr:per.reduce((s,d)=>s+d.isr,0),total:totalMes,tasa:null}}]:[{t:mesNombre(months[0]),d:{...tot,total:totalMes}}];
-  const row=(cls,label,get,fmt)=>`<tr class="${cls}"><td>${label}</td>${cols.map(c=>{const v=get(c.d);return `<td class="num ${typeof v==='number'&&v<0?'neg':''}">${v==null?'—':(fmt?fmt(v):fmtNeg(v))}</td>`;}).join('')}</tr>`;
+  const labs=idx.map(i=>mesNombre(D.meses[i]));
+  const cols=idx.length>1?[...idx.map((i,k)=>({t:labs[k],d:per[k]})),{t:'Total',d:tot}]:[{t:labs[0]||'—',d:tot}];
+  const hd=`<thead><tr><th>Concepto</th>${cols.map(c=>`<th class="r">${c.t}</th>`).join('')}</tr></thead>`;
+  const row=(cls,l,g)=>`<tr class="${cls}"><td>${l}</td>${cols.map(c=>{const v=g(c.d);return `<td class="num ${v<0?'neg':''}">${fmtNeg(v)}</td>`;}).join('')}</tr>`;
   const sec=t=>`<tr class="sec"><td colspan="${cols.length+1}">${t}</td></tr>`;
-  let h=`<thead><tr><th>Concepto</th>${cols.map(c=>`<th class="r">${c.t}</th>`).join('')}</tr></thead><tbody>`;
-  h+=sec('Ingresos cobrados');
-  h+=row('sub','Ventas cafetería (POS, con IVA)',d=>d.pos)+row('sub','Ventas Uber Eats (con IVA)',d=>d.ubB)+row('tot','Total ventas cobradas',d=>d.ventas);
-  h+=sec('IVA mensual');
-  h+=row('sub','IVA trasladado',d=>d.tras)+row('sub','(−) IVA acreditable de facturas',d=>-d.acre);
-  if(tot.retenido) h+=row('sub','(−) IVA retenido por Uber',d=>-d.retenido);
-  h+=row('res','IVA a cargo / (a favor)',d=>d.iva);
-  h+=sec('ISR RESICO');
-  h+=row('sub','Ingresos para ISR (sin IVA)',d=>d.base)+row('sub','Tasa aplicable',d=>d.tasa,v=>(v*100).toFixed(2)+'%')+row('sub','ISR antes de retenciones',d=>d.isrBruto);
-  if(tot.isrRet) h+=row('sub','(−) ISR retenido por Uber',d=>-d.isrRet);
-  h+=row('res','ISR a cargo',d=>d.isr);
-  h+=row('res final','Total impuestos a pagar (IVA + ISR)',d=>d.total);
-  h+=sec('Referencia');
-  h+=row('sub','Gasto con factura',d=>d.conF)+row('sub','Gasto sin factura (sin IVA acreditable)',d=>d.sinF);
-  h+='</tbody>';
+  const block=(titulo,ch)=>{const m=(d,i)=>d; return sec(titulo);};
+  /* tabla por canal y combinada */
+  const canales=canal==='all'?[['POS + Uber Eats','all'],['Cafetería (POS)','POS'],['Uber Eats','UBER']]:[[canal==='POS'?'Cafetería (POS)':'Uber Eats',canal]];
+  let h=hd+'<tbody>';
+  canales.forEach(([t,ch])=>{
+    const pm=idx.map(i=>mes(i,ch)),pt=pm.reduce(add);
+    const cc=idx.length>1?[...pm.map((d,k)=>({d})),{d:pt}]:[{d:pt}];
+    const r2=(cls,l,g)=>`<tr class="${cls}"><td>${l}</td>${cc.map(c=>{const v=g(c.d);return `<td class="num ${v<0?'neg':''}">${fmtNeg(v)}</td>`;}).join('')}</tr>`;
+    h+=sec(t)+r2('sub','Ingresos reales',d=>d.real)+r2('sub','Ingresos declarados',d=>d.decl)+r2('sub','(−) IVA',d=>d.iva)+r2('sub','(−) ISR',d=>d.isr)+r2('sub','(−) Gastos',d=>d.gas)+r2('res','Utilidad neta',d=>d.util);
+  });
+  h+=sec('Reparto entre socios')+row('sub',D.socios[0].n,d=>d.s1)+row('sub',D.socios[1].n,d=>d.s2)+row('res final','Utilidad neta total',d=>d.util)+'</tbody>';
   el('txTable').innerHTML=h;
 
-  // gráficas
-  const lab=months.map(mesNombre);
-  const opt=(stk)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700},boxWidth:12}},datalabels:{color:'#14366B',anchor:'end',align:'top',font:{family:'Manrope',weight:800,size:10},formatter:v=>v?moneyLabel(v):''}},
-    scales:{x:{stacked:stk,grid:{display:false},ticks:{font:{family:'Manrope',weight:700},color:'#14366B'}},y:{stacked:stk,grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}});
-  mk('ivaChart',{type:'bar',data:{labels:lab,datasets:[
-    {label:'IVA trasladado',data:per.map(d=>d.tras),backgroundColor:'#215AB3',borderRadius:6,maxBarThickness:46},
-    {label:'IVA acreditable',data:per.map(d=>d.acre+d.retenido),backgroundColor:'#2A9D8F',borderRadius:6,maxBarThickness:46},
-    {label:'IVA a cargo',data:per.map(d=>d.iva),backgroundColor:'#E76F51',borderRadius:6,maxBarThickness:46}]},options:opt(false)});
-  const t1=opt(true); t1.plugins.datalabels={display:false};
-  mk('totChart',{type:'bar',data:{labels:lab,datasets:[
-    {label:'IVA a cargo',data:per.map(d=>Math.max(0,d.iva)),backgroundColor:'#215AB3',borderRadius:6,stack:'v',maxBarThickness:60},
-    {label:'ISR RESICO',data:per.map(d=>d.isr),backgroundColor:'#E9A23B',borderRadius:6,stack:'v',maxBarThickness:60},
-    {type:'line',label:'Total',data:per.map(d=>d.total),borderColor:'#14366B',backgroundColor:'#14366B',showLine:false,pointRadius:0,datalabels:{display:true,align:'top',anchor:'end',color:'#14366B',font:FONT,formatter:moneyLabel}}]},options:t1});
-  const gm=GAS.filter(g=>months.includes(g.m)&&!g.inv);
-  const pieTip=ctx=>{const t=ctx.dataset.data.reduce((a,b)=>a+b,0);return ` ${ctx.label}: ${fmtMoney(ctx.parsed)} (${(ctx.parsed/t*100).toFixed(1)}%)`;};
-  mk('facChart',{type:'doughnut',data:{labels:['Con factura','Sin factura'],datasets:[{data:[tot.conF,tot.sinF],backgroundColor:['#2A9D8F','#E76F51'],borderColor:'#fff',borderWidth:2}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700,size:11}}},tooltip:{callbacks:{label:pieTip}},datalabels:{color:'#fff',font:FONT,formatter:(v,c)=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return t?(v/t*100).toFixed(0)+'%':'';}}}}});
-  const sc={}; gm.filter(g=>!g.fa).forEach(g=>{sc[g.c]=(sc[g.c]||0)+g.n;});
-  const sl=Object.entries(sc).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  mk('catChart',{type:'bar',data:{labels:sl.map(e=>e[0]),datasets:[{data:sl.map(e=>e[1]),backgroundColor:sl.map((_,i)=>CHART_PALETTE[i%CHART_PALETTE.length]),borderRadius:6,maxBarThickness:20}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:46}},plugins:{legend:{display:false},datalabels:{color:'#14366B',anchor:'end',align:'right',font:{family:'Manrope',weight:800,size:10.5},formatter:moneyLabel}},
-      scales:{x:{grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}},y:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700,size:10.5},color:'#14366B'}}}}});
+  /* tabla socios */
+  let hs=hd+'<tbody>'+row('sub',D.socios[0].n+' ('+Math.round(D.socios[0].p*100)+'%)',d=>d.s1)+row('sub',D.socios[1].n+' ('+Math.round(D.socios[1].p*100)+'%)',d=>d.s2)+row('res final','Utilidad neta del negocio',d=>d.util)+'</tbody>';
+  el('socTable').innerHTML=hs;
 
-  // facturas
-  const k=1+parseFloat(el('fRate').value)/100, r=parseFloat(el('fRate').value)/100;
-  const fl=GAS.filter(g=>months.includes(g.m)&&g.fa).sort((a,b)=>b.f.localeCompare(a.f));
-  el('facBody').innerHTML=fl.map(g=>`<tr><td>${fmtFechaL(g.f)}</td><td>${esc(g.v)}</td><td>${esc(g.d)}</td><td><span class="cat-pill">${esc(g.c)}</span></td><td class="num">${fmtMoney(g.n)}</td><td class="num">${(g.n-g.s).toFixed(2)}</td><td class="num">${(g.n/k*r).toFixed(2)}</td></tr>`).join('')||'<tr><td colspan="7">Sin facturas en este periodo.</td></tr>';
-  el('fT').textContent=fmtMoney(sum(fl,g=>g.n));el('fD').textContent='$'+sum(fl,g=>g.n-g.s).toFixed(2);el('fE').textContent='$'+sum(fl,g=>g.n/k*r).toFixed(2);
-  window.__cols=cols;
+  /* gráficas */
+  const bar=(stk)=>({responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700},boxWidth:12}},datalabels:{color:'#14366B',anchor:'end',align:'top',font:{family:'Manrope',weight:800,size:10},formatter:v=>v?moneyLabel(v):''}},
+    scales:{x:{stacked:stk,grid:{display:false},ticks:{font:{family:'Manrope',weight:700},color:'#14366B'}},y:{stacked:stk,grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}});
+  const ds=(l,d,c)=>({label:l,data:d,backgroundColor:c,borderRadius:6,maxBarThickness:46});
+  mk('socChart',{type:'bar',data:{labels:labs,datasets:[ds(D.socios[0].n,per.map(d=>d.s1),COL[0]),ds(D.socios[1].n,per.map(d=>d.s2),COL[1])]},options:bar(false)});
+  mk('decChart',{type:'bar',data:{labels:labs,datasets:[ds('Ingresos reales',per.map(d=>d.real),COL[0]),ds('Ingresos declarados',per.map(d=>d.decl),COL[2])]},options:bar(false)});
+  const o2=bar(true);o2.plugins.datalabels={display:false};
+  mk('impChart',{type:'bar',data:{labels:labs,datasets:[{...ds('IVA',per.map(d=>d.iva),COL[0]),stack:'v'},{...ds('ISR',per.map(d=>d.isr),COL[2]),stack:'v'},
+    {type:'line',label:'Total',data:per.map(d=>d.imp),showLine:false,pointRadius:0,borderColor:'#14366B',datalabels:{display:true,align:'top',anchor:'end',color:'#14366B',font:FONT,formatter:moneyLabel}}]},options:o2});
+  let a1=0,a2=0;const ac1=[],ac2=[];per.forEach(d=>{a1+=d.s1;a2+=d.s2;ac1.push(a1);ac2.push(a2);});
+  mk('accChart',{type:'line',data:{labels:labs,datasets:[
+    {label:D.socios[0].n,data:ac1,borderColor:COL[0],backgroundColor:COL[0],borderWidth:3,pointRadius:4,tension:.2},
+    {label:D.socios[1].n,data:ac2,borderColor:COL[1],backgroundColor:COL[1],borderWidth:3,pointRadius:4,tension:.2,borderDash:[6,4]}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',weight:700},boxWidth:12}},datalabels:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{family:'Manrope',weight:700},color:'#14366B'}},y:{grid:{color:'#E9EFF7'},ticks:{callback:kTick,font:{family:'Manrope'}}}}}});
+  window.__per=per;window.__labs=labs;
 }
-['fMes','fRate','fAcre','fBase'].forEach(i=>el(i).addEventListener('change',render));
-['fRetIva','fRetIsr','fTasa'].forEach(i=>el(i).addEventListener('input',render));
-el('clearFilters').addEventListener('click',()=>{el('fMes').value='all';el('fRate').value='8';el('fAcre').value='doc';el('fBase').value='bruta';el('fRetIva').value=0;el('fRetIsr').value=0;el('fTasa').value='';render();});
+['fMes','fCanal'].forEach(i=>el(i).addEventListener('change',render));
+el('clearFilters').addEventListener('click',()=>{el('fMes').value='all';el('fCanal').value='all';render();});
 el('exportExcel').addEventListener('click',()=>{
-  const rows=[...document.querySelectorAll('#txTable tbody tr')].filter(tr=>!tr.classList.contains('sec')).map(tr=>{const c=[...tr.children].map(td=>td.textContent);const o={Concepto:c[0]};window.__cols.forEach((col,i)=>o[col.t]=c[i+1]);return o;});
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Cálculo mensual');
-  XLSX.writeFile(wb,'Declaracion_Impuestos_MURH.xlsx');
+  const r2=x=>Math.round(x*100)/100;
+  const rows=window.__per.map((d,i)=>({Mes:window.__labs[i],'Ingresos reales':r2(d.real),'Ingresos declarados':r2(d.decl),IVA:r2(d.iva),ISR:r2(d.isr),Gastos:r2(d.gas),'Utilidad neta':r2(d.util),[D.socios[0].n]:r2(d.s1),[D.socios[1].n]:r2(d.s2)}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Mes a mes');XLSX.writeFile(wb,'Declaracion_Impuestos_Socios_MURH.xlsx');
 });
 render();
 </script>
